@@ -1,6 +1,6 @@
 (() => {
   const config = window.SNAG_CLOUD_CONFIG || {};
-  const configured = Boolean(config.url && config.anonKey && window.supabase);
+  const configured = Boolean(config.url && config.anonKey);
   const stores = ['snagline-apartment-record', 'snagline-inspection-state', 'snagline-inspection-schedule', 'snagline-report-sections', 'snagline-linked-apartment'];
   const syncKey = 'snagline-cloud-last-sync';
   let client = null;
@@ -48,7 +48,12 @@
     if (button) button.textContent = user ? 'Sign out' : 'Cloud login';
   };
   const auth = async () => {
-    if (!client) return showToast('Add Supabase settings to cloud-config.js first');
+    if (!client) {
+      const message = window.supabase ? 'Cloud login is still loading. Please click again.' : 'Supabase client could not load. Check your internet connection and refresh the page.';
+      showToast(message);
+      window.alert(message);
+      return;
+    }
     if (user) {
       await client.auth.signOut();
       user = null;
@@ -104,23 +109,35 @@
       container.prepend(panel);
       button = document.querySelector('#cloudAuthButton');
     }
-    button.addEventListener('click', auth);
+    button.onclick = auth;
     renderStatus();
+  };
+  const initialize = async () => {
+    injectControls();
+    if (!configured) return;
+    if (!window.supabase) {
+      renderStatus();
+      return;
+    }
+    try {
+      client = window.supabase.createClient(config.url, config.anonKey);
+      const session = await client.auth.getSession();
+      user = session.data.session?.user || null;
+      renderStatus();
+      if (user) { await loadSnapshot(); subscribeToChanges(); }
+      client.auth.onAuthStateChange((_event, sessionState) => {
+        user = sessionState?.user || null;
+        renderStatus();
+        if (user) subscribeToChanges();
+      });
+    } catch (error) {
+      showToast(`Cloud setup error: ${error.message}`);
+      renderStatus();
+    }
   };
   window.snagCloudSave = queueSave;
   window.addEventListener('storage', (event) => { if (stores.includes(event.key)) queueSave(); });
-  document.addEventListener('DOMContentLoaded', async () => {
-    injectControls();
-    if (!configured) return;
-    client = window.supabase.createClient(config.url, config.anonKey);
-    const session = await client.auth.getSession();
-    user = session.data.session?.user || null;
-    renderStatus();
-    if (user) { await loadSnapshot(); subscribeToChanges(); }
-    client.auth.onAuthStateChange((_event, sessionState) => {
-      user = sessionState?.user || null;
-      renderStatus();
-      if (user) subscribeToChanges();
-    });
-  });
+  window.snagCloudAuth = auth;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
+  else initialize();
 })();
