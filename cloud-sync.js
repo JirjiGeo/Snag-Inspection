@@ -78,12 +78,19 @@
   };
   const loadSnapshot = async () => {
     if (!client || !user) return;
-    const { data, error } = await client.from('snag_workspaces').select('snapshot').eq('user_id', user.id).maybeSingle();
+    const { data, error } = await client.from('snag_workspaces').select('snapshot, updated_at').eq('user_id', user.id).maybeSingle();
     if (error) return showToast(`Cloud load failed: ${error.message}`);
     if (data?.snapshot) {
       applySnapshot(data.snapshot);
-      showToast('Loaded data from cloud. Refreshing...');
-      setTimeout(() => window.location.reload(), 500);
+      const refreshKey = `snagline-cloud-refreshed-${user.id}`;
+      const lastRefresh = sessionStorage.getItem(refreshKey);
+      if (lastRefresh !== data.updated_at) {
+        sessionStorage.setItem(refreshKey, data.updated_at);
+        showToast('Loaded data from cloud. Refreshing once...');
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        showToast('Cloud data loaded');
+      }
     } else await saveSnapshot();
   };
   const subscribeToChanges = () => {
