@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snagline | Activity</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root{--brand-dark:#013220;--brand-green:#036307;--brand-accent:#2f8e31;--brand-paper:#f6f7f1;--brand-line:#dfe6dc}body{background:var(--brand-paper)}.app-shell,.main-content{background:var(--brand-paper)}.sidebar{background:var(--brand-dark);border-right:0}.brand{color:white}.nav-item{color:#cbd8d0}.nav-item.active{background:#eaf0e7;color:var(--brand-dark)}.nav-item.active .nav-icon{color:var(--brand-green)}.button-dark{background:var(--brand-dark);color:white}.status-card.accent,.today-banner,.finding-entry{background:var(--brand-dark)}.summary-strip .status-card{background:#e6ebdf;border-color:#c9d3c5}.upcoming-panel,.schedule-panel,.calendar-panel{background:#e6ebdf;border-color:#c9d3c5}.brand-logo{width:170px;max-width:100%;height:auto;display:block;background:transparent;border-radius:0;padding:0;object-fit:contain}.main-content{flex:1;width:auto;max-width:none;margin:0;padding:38px 46px;min-width:0}.summary-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:16px}.status-card{background:#c4c8cd;border:1px solid #aeb4bb;border-radius:9px;padding:13px}.status-card span{display:block;color:#5f6d77;font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.6px}.status-card strong{display:block;margin-top:8px;color:#013220;font:700 23px 'Space Grotesk'}.status-card.accent{background:#013220}.status-card.accent span,.status-card.accent strong{color:white}.upcoming-panel{margin-top:12px;background:#c4c8cd;border:1px solid #aeb4bb;border-radius:12px;padding:16px 18px}.upcoming-list{display:grid;gap:7px;padding-top:12px}.upcoming-item{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;background:#eceeef;border:1px solid #aeb4bb;border-left:4px solid #036307;border-radius:8px;padding:11px;text-align:left;color:#26333a;font:600 12px 'DM Sans'}.upcoming-item strong{display:block}.upcoming-item .slot-meta{color:#6b7780;font-size:10px;margin-top:3px}.upcoming-actions{display:flex;gap:6px}.upcoming-actions button{border:0;border-radius:5px;padding:7px 9px;font:700 10px 'DM Sans';cursor:pointer}.upcoming-actions .inspect{background:#013220;color:white}.upcoming-item[data-priority='High']{border-left-color:#d17c55}.upcoming-item[data-priority='Critical']{border-left-color:#b64e59}.upcoming-empty{margin:0;color:#6b7780;font-size:12px}.schedule-shell{display:grid;grid-template-columns:330px 1fr;gap:16px;margin-top:16px}.schedule-panel,.calendar-panel{background:#c4c8cd;border:1px solid #aeb4bb;border-radius:12px;padding:18px}.today-banner{background:#013220;color:#fff;border-radius:10px;padding:14px 18px;margin-top:16px}.today-banner strong{font-family:'Space Grotesk';font-size:15px}.today-banner p{margin:4px 0 0;color:#c9d8e3;font-size:12px}.schedule-form{display:grid;gap:10px;margin-top:15px}.schedule-form label{display:grid;gap:5px;color:#5f6d77;font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.7px}.schedule-form input,.schedule-form select,.schedule-form textarea{width:100%;box-sizing:border-box;border:1px solid #aeb6bd;border-radius:5px;background:#eceeef;color:#26333a;padding:10px;font:500 12px 'DM Sans'}.schedule-form textarea{min-height:60px;resize:vertical}.form-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.button.danger{background:#b85252;color:white;border-color:#b85252}.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.calendar-header h2{font:700 20px 'Space Grotesk';margin:0}.calendar-nav{display:flex;gap:6px}.calendar-nav button{border:1px solid #9aa5ad;background:#eceeef;border-radius:5px;padding:8px 10px;cursor:pointer}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day-name{font:700 10px 'DM Sans';color:#5f6d77;text-transform:uppercase;padding:6px}.day-cell{min-height:112px;background:#eceeef;border:1px solid #b9bec4;border-radius:8px;padding:8px}.day-cell.outside{background:#d7dade;color:#89919a}.day-cell.today{outline:2px solid #013220}.day-number{font:700 11px 'DM Sans';margin-bottom:7px}.slot{display:block;width:100%;border:0;border-left:4px solid #036307;background:#eaf2e6;border-radius:5px;padding:6px;margin-top:5px;text-align:left;font:600 10px 'DM Sans';color:#1e2a23;cursor:pointer}.slot.high{border-left-color:#d17c55;background:#f3e2d8}.slot.critical{border-left-color:#b64e59;background:#efd5d8}.slot .time{display:block;color:#61707a;margin-top:2px}@media(max-width:1000px){.schedule-shell{grid-template-columns:1fr}.day-cell{min-height:90px}}@media(max-width:700px){.main-content{padding:22px 14px}.calendar-grid{grid-template-columns:1fr}.day-name{display:none}.day-cell{min-height:auto}.day-cell.outside{display:none}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span>QBEL</span></div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="index.html"><span class="nav-icon">◷</span> Activity</a>
+        <a class="nav-item" href="inspection.html"><span class="nav-icon">▦</span> Inspections</a>
+        <a class="nav-item" href="apartments.html"><span class="nav-icon">⌂</span> Apartments</a>
+        <a class="nav-item" href="reports.html"><span class="nav-icon">□</span> Reports</a>
+      </nav>
+      <div class="sidebar-bottom"><div class="sync-status"><span class="sync-dot"></span><span><strong>Local workspace</strong><small>Changes saved automatically</small></span></div><button class="user-card"><span class="avatar">GM</span><span><strong>Georges Mansour</strong><small>Site inspector</small></span><span class="more">•••</span></button></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><div><p class="eyebrow">Tuesday, September 08, 2026</p><h1>Inspection schedule</h1></div><button class="icon-button" aria-label="Notifications">♧<span class="notification-dot"></span></button></header>
+      <section class="summary-strip" id="statusSummary" aria-label="Apartment status summary"></section>
+      <div class="today-banner" id="todayBanner"><strong>Today’s inspections</strong><p>No units scheduled for inspection today.</p></div>
+      <section class="upcoming-panel" aria-label="Upcoming inspections">
+        <div class="record-heading"><h3>Upcoming inspections</h3><span>Booked slots</span></div>
+        <div class="upcoming-list" id="upcomingList"></div>
+      </section>
+      <section class="schedule-shell">
+        <div class="schedule-panel">
+          <div class="record-heading"><h3>Book inspection slot</h3><span>Schedule</span></div>
+          <form class="schedule-form" id="slotForm">
+            <label>Apartment / unit<select id="slotUnit" required></select></label>
+            <label>Date<input id="slotDate" type="date" required></label>
+            <label>Time<input id="slotTime" type="time" required></label>
+            <label>Priority<select id="slotPriority"><option>Normal</option><option>High</option><option>Critical</option></select></label>
+            <label>Notes<textarea id="slotNotes" placeholder="Access details, inspector notes, reminders..."></textarea></label>
+            <div class="form-actions"><button class="button button-dark" id="saveSlot" type="submit">Book slot</button><button class="button button-outline" id="clearSlot" type="button">Clear</button><button class="button danger" id="deleteSlot" type="button">Delete</button></div>
+          </form>
+        </div>
+        <div class="calendar-panel">
+          <div class="calendar-header"><h2 id="calendarTitle">September 2026</h2><div class="calendar-nav"><button id="prevMonth" aria-label="Previous month">‹</button><button id="todayButton">Today</button><button id="nextMonth" aria-label="Next month">›</button></div></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast">Saved to local workspace</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="cloud-config.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script src="activity.js"></script>
+</body>
+</html>

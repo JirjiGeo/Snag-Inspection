@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snagline | Reports</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{background:#f6f7f1}.app-shell,.main-content{background:#f6f7f1}.main-content{flex:1;width:auto;max-width:none;margin:0;padding:38px 46px;min-width:0}.reports-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;margin-top:16px}.report-units,.report-detail{background:#e6ebdf;border:1px solid #c9d3c5;border-radius:12px;padding:18px}.report-unit{display:flex;justify-content:space-between;align-items:center;width:100%;border:1px solid #bdcabd;background:#eef2eb;border-radius:8px;padding:12px;margin-top:8px;text-align:left;color:#1e2a23;font:600 12px 'DM Sans';cursor:pointer}.report-unit.active{background:#013220;color:#fff;border-color:#013220}.report-unit span{font-size:10px;opacity:.75}.report-detail h3{font:700 18px 'Space Grotesk';margin:0 0 4px}.report-meta{color:#5f6d62;font-size:11px;margin-bottom:14px}.report-table{width:100%;border-collapse:collapse;font:500 12px 'DM Sans'}.report-table th{text-align:left;font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.6px;color:#5f6d62;padding:9px;border-bottom:1px solid #c9d3c5}.report-table td{padding:9px;border-bottom:1px solid #d7ddd2;vertical-align:top}.report-table tr:hover td{background:#eef2eb}.sev{font:700 10px 'DM Sans';text-transform:uppercase;padding:2px 8px;border-radius:10px}.sev-low{background:#d7e5d4;color:#1f5c2b}.sev-medium{background:#e8e4cf;color:#7a6520}.sev-high{background:#f2dfd5;color:#8a4a2b}.sev-critical{background:#eed1d2;color:#8e3033}.report-actions{display:flex;gap:8px;margin-bottom:14px}.empty-report{color:#7a857c;font-size:12px;padding:24px 0;text-align:center}@media(max-width:900px){.reports-layout{grid-template-columns:1fr}.report-table{font-size:11px}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span>QBEL</span></div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html"><span class="nav-icon">◷</span> Activity</a>
+        <a class="nav-item" href="inspection.html"><span class="nav-icon">▦</span> Inspections</a>
+        <a class="nav-item" href="apartments.html"><span class="nav-icon">⌂</span> Apartments</a>
+        <a class="nav-item active" href="reports.html"><span class="nav-icon">□</span> Reports</a>
+      </nav>
+      <div class="sidebar-bottom"><div class="sync-status"><span class="sync-dot"></span><span><strong>Local workspace</strong><small>Changes saved automatically</small></span></div><button class="user-card"><span class="avatar">GM</span><span><strong>Georges Mansour</strong><small>Site inspector</small></span><span class="more">•••</span></button></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><div><p class="eyebrow">Tuesday, September 08, 2026</p><h1>Reports</h1></div><button class="icon-button" aria-label="Notifications">♧<span class="notification-dot"></span></button></header>
+      <section class="reports-layout">
+        <div class="report-units">
+          <div class="record-heading"><h3>Units</h3><span>Select to view report</span></div>
+          <div id="reportUnitList"></div>
+        </div>
+        <div class="report-detail" id="reportDetail"></div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast">Saved to local workspace</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="cloud-config.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script src="reports.js"></script>
+</body>
+</html>

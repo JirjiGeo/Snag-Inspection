@@ -1,0 +1,122 @@
+(() => {
+  const config = window.SNAG_CLOUD_CONFIG || {};
+  const configured = Boolean(config.url && config.anonKey && window.supabase);
+  const stores = ['snagline-apartment-record', 'snagline-inspection-state', 'snagline-inspection-schedule', 'snagline-report-sections', 'snagline-linked-apartment'];
+  const syncKey = 'snagline-cloud-last-sync';
+  let client = null;
+  let user = null;
+  let saveTimer = null;
+  let applyingRemote = false;
+  let realtimeChannel = null;
+
+  const readSnapshot = () => Object.fromEntries(stores.map((key) => [key, localStorage.getItem(key)]));
+  const applySnapshot = (snapshot) => {
+    applyingRemote = true;
+    stores.forEach((key) => {
+      if (snapshot?.[key] === null || snapshot?.[key] === undefined) localStorage.removeItem(key);
+      else localStorage.setItem(key, snapshot[key]);
+    });
+    applyingRemote = false;
+  };
+  const saveSnapshot = async () => {
+    if (!client || !user || applyingRemote) return;
+    const snapshot = readSnapshot();
+    const { error } = await client.from('snag_workspaces').upsert({ user_id: user.id, snapshot, updated_at: new Date().toISOString() });
+    if (error) showToast(`Cloud save failed: ${error.message}`);
+    else {
+      localStorage.setItem(syncKey, new Date().toISOString());
+      showToast('Saved to cloud');
+    }
+  };
+  const queueSave = () => {
+    if (!client || !user || applyingRemote) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveSnapshot, 700);
+  };
+  const showToast = (message) => {
+    const toast = document.querySelector('#toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
+  };
+  const renderStatus = () => {
+    const status = document.querySelector('#cloudStatus');
+    if (status) status.textContent = user ? `Cloud: ${user.email}` : configured ? 'Cloud: signed out' : 'Cloud: not configured';
+    const button = document.querySelector('#cloudAuthButton');
+    if (button) button.textContent = user ? 'Sign out' : 'Cloud login';
+  };
+  const auth = async () => {
+    if (!client) return showToast('Add Supabase settings to cloud-config.js first');
+    if (user) {
+      await client.auth.signOut();
+      user = null;
+      renderStatus();
+      return;
+    }
+    const email = window.prompt('Cloud account email:');
+    const password = email && window.prompt('Cloud account password (minimum 6 characters):');
+    if (!email || !password) return;
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error && error.message.toLowerCase().includes('invalid login credentials')) {
+      const create = window.confirm('No matching account. Create this cloud account now?');
+      if (create) {
+        const result = await client.auth.signUp({ email, password });
+        if (result.error) return showToast(`Cloud signup failed: ${result.error.message}`);
+        user = result.data.user;
+      }
+    } else if (error) return showToast(`Cloud login failed: ${error.message}`);
+    else user = data.user;
+    await loadSnapshot();
+    renderStatus();
+  };
+  const loadSnapshot = async () => {
+    if (!client || !user) return;
+    const { data, error } = await client.from('snag_workspaces').select('snapshot').eq('user_id', user.id).maybeSingle();
+    if (error) return showToast(`Cloud load failed: ${error.message}`);
+    if (data?.snapshot) {
+      applySnapshot(data.snapshot);
+      showToast('Loaded data from cloud. Refreshing...');
+      setTimeout(() => window.location.reload(), 500);
+    } else await saveSnapshot();
+  };
+  const subscribeToChanges = () => {
+    if (!client || !user || realtimeChannel) return;
+    realtimeChannel = client.channel(`snag-workspace-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'snag_workspaces', filter: `user_id=eq.${user.id}` }, (payload) => {
+        if (payload.new?.snapshot && !applyingRemote) {
+          applySnapshot(payload.new.snapshot);
+          showToast('Updated from another device. Refreshing...');
+          setTimeout(() => window.location.reload(), 500);
+        }
+      })
+      .subscribe();
+  };
+  const injectControls = () => {
+    const container = document.querySelector('.sidebar-bottom');
+    if (!container || document.querySelector('#cloudAuthButton')) return;
+    const panel = document.createElement('div');
+    panel.className = 'cloud-controls';
+    panel.innerHTML = '<span id="cloudStatus">Cloud: checking...</span><button id="cloudAuthButton" type="button">Cloud login</button>';
+    container.prepend(panel);
+    document.querySelector('#cloudAuthButton').addEventListener('click', auth);
+    renderStatus();
+  };
+  window.snagCloudSave = queueSave;
+  window.addEventListener('storage', (event) => { if (stores.includes(event.key)) queueSave(); });
+  document.addEventListener('DOMContentLoaded', async () => {
+    injectControls();
+    if (!configured) return;
+    client = window.supabase.createClient(config.url, config.anonKey);
+    const session = await client.auth.getSession();
+    user = session.data.session?.user || null;
+    renderStatus();
+    if (user) { await loadSnapshot(); subscribeToChanges(); }
+    client.auth.onAuthStateChange((_event, sessionState) => {
+      user = sessionState?.user || null;
+      renderStatus();
+      if (user) subscribeToChanges();
+    });
+  });
+})();

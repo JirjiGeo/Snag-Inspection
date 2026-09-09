@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snagline | Apartments</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root{--brand-dark:#013220;--brand-green:#036307;--brand-accent:#2f8e31;--brand-paper:#f6f7f1;--brand-line:#dfe6dc}body{background:var(--brand-paper)}.app-shell,.main-content{background:var(--brand-paper)}.sidebar{background:var(--brand-dark);border-right:0}.brand{color:white}.nav-item{color:#cbd8d0}.nav-item.active{background:#eaf0e7;color:var(--brand-dark)}.nav-item.active .nav-icon{color:var(--brand-green)}.button-dark{background:var(--brand-dark);color:white}.apartment-list-panel,.unit-record{background:#e6ebdf;border-color:#c9d3c5}.record-panel{background:#f1f4ed;border-color:#c9d3c5}.apartment-card.active{background:var(--brand-dark);color:white;border-color:var(--brand-dark)}.main-content{flex:1;width:auto;max-width:none;margin:0;padding:38px 46px;min-width:0}.apartment-list-panel{margin-top:14px;padding:16px 18px;background:#c4c8cd;border:1px solid #aeb4bb;border-radius:12px}.unit-search{display:grid;gap:5px;color:#5f6d77;font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.7px;margin-top:12px}.unit-search input{border:1px solid #aeb6bd;background:#eceeef;color:#26333a;border-radius:5px;padding:9px;font:500 12px 'DM Sans'}.profile-header-actions{display:flex;flex-wrap:wrap;justify-content:flex-end}.profile-header-actions .button{white-space:nowrap}.button.danger{background:#b85252;color:white;border-color:#b85252}.button-outline{border-color:#9aa5ad;background:#eceeef;color:#33414a}.record-panel.is-view input,.record-panel.is-view textarea,.record-panel.is-view select{background:#d8dcdf;color:#5c6870;pointer-events:none}.apartment-list{display:flex;gap:8px;overflow:auto;padding-top:13px}.apartment-card{min-width:190px;border:1px solid #aeb6bd;background:#eceeef;border-radius:9px;padding:12px;text-align:left;color:#26333a;font:600 12px 'DM Sans';cursor:pointer}.apartment-card.active{background:#013220;color:white;border-color:#013220}.apartment-card strong{display:block;font-family:'Space Grotesk';font-size:14px;margin-bottom:5px}.apartment-card span{font-size:10px;color:inherit;opacity:.78}.unit-record{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:14px;margin-top:14px;padding:18px;background:#c4c8cd;border:1px solid #aeb4bb;border-radius:12px}.record-panel{background:#f0f1f2;border:1px solid #bfc4ca;border-radius:10px;padding:16px;display:grid;gap:10px;align-content:start}.record-heading{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #c8cdd2;padding-bottom:9px}.record-heading h3{font:700 13px 'Space Grotesk';margin:0}.record-heading span{font:600 10px 'DM Sans';color:#73808a;text-transform:uppercase;letter-spacing:.7px}.record-panel label{display:grid;gap:5px;color:#5f6d77;font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.6px}.record-panel input,.record-panel select,.record-panel textarea{width:100%;box-sizing:border-box;border:1px solid #aeb6bd;border-radius:5px;background:#e7e9eb;color:#26333a;padding:9px;font:500 12px 'DM Sans'}.record-panel textarea{min-height:54px;resize:vertical}.document-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.document-card{border:1px solid #b7bfc6;background:#e3e6e8;border-radius:7px;padding:10px}.document-card strong{display:block;font-size:11px;margin-bottom:5px}.document-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.document-actions button{border:0;background:#013220;color:white;border-radius:5px;padding:6px 9px;font:700 10px 'DM Sans';cursor:pointer}.document-actions span{font:600 10px 'DM Sans';color:#6b7780}.document-list{display:grid;gap:5px}.document-row{display:flex;align-items:center;gap:5px}.document-link{flex:1;min-width:0;border:0;background:transparent;color:#036307;text-align:left;text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 10px 'DM Sans';cursor:pointer}.document-row-actions{display:flex}.document-row-actions button{border:0;background:#c8cdd2;color:#33414a;border-radius:4px;width:22px;height:22px;font:700 11px 'DM Sans';cursor:pointer;margin-left:3px}@media(max-width:1000px){.unit-record{grid-template-columns:1fr 1fr}.record-panel:last-child{grid-column:span 2}}@media(max-width:700px){.main-content{padding:22px 14px}.unit-record{grid-template-columns:1fr}.record-panel:last-child{grid-column:auto}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span>QBEL</span></div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html"><span class="nav-icon">◷</span> Activity</a>
+        <a class="nav-item" href="inspection.html"><span class="nav-icon">▦</span> Inspections</a>
+        <a class="nav-item active" href="apartments.html"><span class="nav-icon">⌂</span> Apartments</a>
+        <a class="nav-item" href="reports.html"><span class="nav-icon">□</span> Reports</a>
+      </nav>
+      <div class="sidebar-bottom"><div class="sync-status"><span class="sync-dot"></span><span><strong>Local workspace</strong><small>Changes saved automatically</small></span></div><button class="user-card"><span class="avatar">GM</span><span><strong>Georges Mansour</strong><small>Site inspector</small></span><span class="more">•••</span></button></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><div><p class="eyebrow">Tuesday, September 08, 2026</p><h1>Apartments</h1></div><div class="top-actions profile-header-actions"><button class="button button-dark" id="addUnit">Add unit</button><button class="button button-outline" id="editApartment">Edit</button><button class="button button-dark" id="createProfile">Create profile</button><button class="button button-dark" id="openInspection">Open inspection</button><button class="button danger" id="deleteApartment">Delete apartment</button><button class="icon-button" aria-label="Notifications">♧<span class="notification-dot"></span></button></div></header>
+      <section class="apartment-list-panel" aria-label="Apartment units">
+        <div class="record-heading"><h3>Apartment units</h3><span>Selected unit is linked to inspections</span></div>
+        <label class="unit-search">Search unit number<input id="unitSearch" type="search" placeholder="Search by unit number"></label>
+        <div class="apartment-list" id="apartmentList"></div>
+      </section>
+      <section class="unit-record" aria-label="Apartment record">
+        <div class="record-panel">
+          <div class="record-heading"><h3>Owner details</h3><span>Contact</span></div>
+          <label>Unit number<input id="unitName" type="text" placeholder="Unit 1204"></label>
+          <label>Owner name<input id="ownerName" type="text" placeholder="Owner name"></label>
+          <label>Phone number<input id="ownerPhone" type="tel" placeholder="+971 50 000 0000"></label>
+          <label>Email<input id="ownerEmail" type="email" placeholder="owner@example.com"></label>
+        </div>
+        <div class="record-panel">
+          <div class="record-heading"><h3>Unit details</h3><span>Property</span></div>
+          <label>Building name<input id="buildingName" type="text" placeholder="Marina Heights"></label>
+          <label>Unit space<input id="unitSpace" type="text" placeholder="1,240 sq ft"></label>
+          <label>Bedrooms<select id="unitBedrooms"><option>Studio</option><option>One bedroom</option><option>Two bedrooms</option><option>Three bedrooms</option><option>Townhouse</option><option>Penthouse</option></select></label>
+          <label>Layout<select id="unitLayout"><option>Simplex</option><option>Duplex</option></select></label>
+          <label>Maid room<select id="maidRoom"><option>With maid room</option><option>Without maid room</option></select></label>
+          <label>Outdoor area<select id="outdoorArea"><option>Balcony</option><option>Garden</option><option>Terrace</option></select></label>
+          <label>Additional notes<textarea id="unitNotes" placeholder="Parking, storage, view, floor notes..."></textarea></label>
+        </div>
+        <div class="record-panel">
+          <div class="record-heading"><h3>Unit status</h3><span>Workflow</span></div>
+          <label>Current stage<select id="unitStatus"><option>To be quoted</option><option>Quoted</option><option>Paid</option><option>To be inspected</option><option selected>Inspected</option><option>Report issued</option><option>Closed</option></select></label>
+          <div class="document-grid" id="documentGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast">Saved to local workspace</div>
+  <input type="file" id="documentInput" multiple hidden>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="cloud-config.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script src="apartments.js"></script>
+</body>
+</html>
