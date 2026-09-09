@@ -82,10 +82,9 @@
     if (error) return showToast(`Cloud load failed: ${error.message}`);
     if (data?.snapshot) {
       applySnapshot(data.snapshot);
-      const refreshKey = `snagline-cloud-refreshed-${user.id}`;
-      const lastRefresh = sessionStorage.getItem(refreshKey);
-      if (lastRefresh !== data.updated_at) {
-        sessionStorage.setItem(refreshKey, data.updated_at);
+      const refreshKey = `snagline-cloud-refresh-complete-${user.id}`;
+      if (sessionStorage.getItem(refreshKey) !== 'true') {
+        sessionStorage.setItem(refreshKey, 'true');
         showToast('Loaded data from cloud. Refreshing once...');
         setTimeout(() => window.location.reload(), 500);
       } else {
