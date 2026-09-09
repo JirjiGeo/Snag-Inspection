@@ -95,12 +95,16 @@
   };
   const injectControls = () => {
     const container = document.querySelector('.sidebar-bottom');
-    if (!container || document.querySelector('#cloudAuthButton')) return;
-    const panel = document.createElement('div');
-    panel.className = 'cloud-controls';
-    panel.innerHTML = '<span id="cloudStatus">Cloud: checking...</span><button id="cloudAuthButton" type="button">Cloud login</button>';
-    container.prepend(panel);
-    document.querySelector('#cloudAuthButton').addEventListener('click', auth);
+    if (!container) return;
+    let button = document.querySelector('#cloudAuthButton');
+    if (!button) {
+      const panel = document.createElement('div');
+      panel.className = 'cloud-controls';
+      panel.innerHTML = '<span id="cloudStatus">Cloud: checking...</span><button id="cloudAuthButton" type="button">Cloud login</button>';
+      container.prepend(panel);
+      button = document.querySelector('#cloudAuthButton');
+    }
+    button.addEventListener('click', auth);
     renderStatus();
   };
   window.snagCloudSave = queueSave;
