@@ -98,8 +98,7 @@
       .on('postgres_changes', { event: '*', schema: 'public', table: 'snag_workspaces', filter: `user_id=eq.${user.id}` }, (payload) => {
         if (payload.new?.snapshot && !applyingRemote) {
           applySnapshot(payload.new.snapshot);
-          showToast('Updated from another device. Refreshing...');
-          setTimeout(() => window.location.reload(), 500);
+          showToast('Updated from another device');
         }
       })
       .subscribe();
