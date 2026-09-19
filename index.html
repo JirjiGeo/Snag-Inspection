@@ -1,57 +1,133 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snagline | Activity</title>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    :root{--brand-dark:#013220;--brand-green:#036307;--brand-accent:#2f8e31;--brand-paper:#f6f7f1;--brand-line:#dfe6dc}body{background:var(--brand-paper)}.app-shell,.main-content{background:var(--brand-paper)}.sidebar{background:var(--brand-dark);border-right:0}.brand{color:white}.nav-item{color:#cbd8d0}.nav-item.active{background:#eaf0e7;color:var(--brand-dark)}.nav-item.active .nav-icon{color:var(--brand-green)}.button-dark{background:var(--brand-dark);color:white}.status-card.accent,.today-banner,.finding-entry{background:var(--brand-dark)}.summary-strip .status-card{background:#e6ebdf;border-color:#c9d3c5}.upcoming-panel,.schedule-panel,.calendar-panel{background:#e6ebdf;border-color:#c9d3c5}.brand-logo{width:170px;max-width:100%;height:auto;display:block;background:transparent;border-radius:0;padding:0;object-fit:contain}.main-content{flex:1;width:auto;max-width:none;margin:0;padding:38px 46px;min-width:0}.summary-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:16px}.status-card{background:#c4c8cd;border:1px solid #aeb4bb;border-radius:9px;padding:13px}.status-card span{display:block;color:#5f6d77;font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.6px}.status-card strong{display:block;margin-top:8px;color:#013220;font:700 23px 'Space Grotesk'}.status-card.accent{background:#013220}.status-card.accent span,.status-card.accent strong{color:white}.upcoming-panel{margin-top:12px;background:#c4c8cd;border:1px solid #aeb4bb;border-radius:12px;padding:16px 18px}.upcoming-list{display:grid;gap:7px;padding-top:12px}.upcoming-item{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;background:#eceeef;border:1px solid #aeb4bb;border-left:4px solid #036307;border-radius:8px;padding:11px;text-align:left;color:#26333a;font:600 12px 'DM Sans'}.upcoming-item strong{display:block}.upcoming-item .slot-meta{color:#6b7780;font-size:10px;margin-top:3px}.upcoming-actions{display:flex;gap:6px}.upcoming-actions button{border:0;border-radius:5px;padding:7px 9px;font:700 10px 'DM Sans';cursor:pointer}.upcoming-actions .inspect{background:#013220;color:white}.upcoming-item[data-priority='High']{border-left-color:#d17c55}.upcoming-item[data-priority='Critical']{border-left-color:#b64e59}.upcoming-empty{margin:0;color:#6b7780;font-size:12px}.schedule-shell{display:grid;grid-template-columns:330px 1fr;gap:16px;margin-top:16px}.schedule-panel,.calendar-panel{background:#c4c8cd;border:1px solid #aeb4bb;border-radius:12px;padding:18px}.today-banner{background:#013220;color:#fff;border-radius:10px;padding:14px 18px;margin-top:16px}.today-banner strong{font-family:'Space Grotesk';font-size:15px}.today-banner p{margin:4px 0 0;color:#c9d8e3;font-size:12px}.schedule-form{display:grid;gap:10px;margin-top:15px}.schedule-form label{display:grid;gap:5px;color:#5f6d77;font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.7px}.schedule-form input,.schedule-form select,.schedule-form textarea{width:100%;box-sizing:border-box;border:1px solid #aeb6bd;border-radius:5px;background:#eceeef;color:#26333a;padding:10px;font:500 12px 'DM Sans'}.schedule-form textarea{min-height:60px;resize:vertical}.form-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.button.danger{background:#b85252;color:white;border-color:#b85252}.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.calendar-header h2{font:700 20px 'Space Grotesk';margin:0}.calendar-nav{display:flex;gap:6px}.calendar-nav button{border:1px solid #9aa5ad;background:#eceeef;border-radius:5px;padding:8px 10px;cursor:pointer}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day-name{font:700 10px 'DM Sans';color:#5f6d77;text-transform:uppercase;padding:6px}.day-cell{min-height:112px;background:#eceeef;border:1px solid #b9bec4;border-radius:8px;padding:8px}.day-cell.outside{background:#d7dade;color:#89919a}.day-cell.today{outline:2px solid #013220}.day-number{font:700 11px 'DM Sans';margin-bottom:7px}.slot{display:block;width:100%;border:0;border-left:4px solid #036307;background:#eaf2e6;border-radius:5px;padding:6px;margin-top:5px;text-align:left;font:600 10px 'DM Sans';color:#1e2a23;cursor:pointer}.slot.high{border-left-color:#d17c55;background:#f3e2d8}.slot.critical{border-left-color:#b64e59;background:#efd5d8}.slot .time{display:block;color:#61707a;margin-top:2px}@media(max-width:1000px){.schedule-shell{grid-template-columns:1fr}.day-cell{min-height:90px}}@media(max-width:700px){.main-content{padding:22px 14px}.calendar-grid{grid-template-columns:1fr}.day-name{display:none}.day-cell{min-height:auto}.day-cell.outside{display:none}}
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qbel | Employee evaluations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+  <!-- Login Screen -->
+  <div class="auth-screen" id="authScreen" aria-hidden="false">
+    <section class="auth-container" role="main">
+      <div class="auth-header">
+        <div class="brand auth-brand"><span class="brand-mark">Q</span><span class="brand-name">Qbel <small>FM &amp; Technical Services</small></span></div>
+        <h1>Employee Evaluations</h1>
+        <p>Sign in to your account to continue</p>
+      </div>
+      <form id="authForm" class="auth-form">
+        <div class="form-group">
+          <label for="emailInput">Email address</label>
+          <input id="emailInput" type="email" required placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label for="passwordInput">Password</label>
+          <input id="passwordInput" type="password" required placeholder="********" />
+        </div>
+        <button type="submit" class="primary-button auth-button">Sign In</button>
+        <p class="auth-footer">New user? <button type="button" id="toggleSignUp" class="link-button">Create an account</button></p>
+      </form>
+      <div id="authMessage" class="auth-message"></div>
+    </section>
+  </div>
+
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand"><span>QBEL</span></div>
-      <nav class="main-nav" aria-label="Main navigation">
-        <a class="nav-item active" href="index.html"><span class="nav-icon">◷</span> Activity</a>
-        <a class="nav-item" href="inspection.html"><span class="nav-icon">▦</span> Inspections</a>
-        <a class="nav-item" href="apartments.html"><span class="nav-icon">⌂</span> Apartments</a>
-        <a class="nav-item" href="reports.html"><span class="nav-icon">□</span> Reports</a>
+      <div class="brand"><span class="brand-mark">Q</span><span class="brand-name">Qbel <small>FM &amp; Technical Services</small></span></div>
+      <nav class="primary-nav" aria-label="Primary navigation">
+        <a class="nav-item active" href="#dashboard" data-tab="dashboard"><span class="nav-icon">Home</span>Dashboard</a>
+        <a class="nav-item" href="#employees" data-tab="employees"><span class="nav-icon">Team</span>Employees</a>
+        <a class="nav-item" href="#evaluations" data-tab="evaluations"><span class="nav-icon">Eval</span>Evaluations &amp; scoring</a>
       </nav>
-      <div class="sidebar-bottom"><div class="cloud-controls"><span id="cloudStatus">Cloud: checking...</span><button id="cloudAuthButton" type="button">Cloud login</button></div><div class="sync-status"><span class="sync-dot"></span><span><strong>Local workspace</strong><small>Changes saved automatically</small></span></div><button class="user-card"><span class="avatar">GM</span><span><strong>Georges Mansour</strong><small>Site inspector</small></span><span class="more">•••</span></button></div>
+      <div class="sidebar-bottom">
+        <div class="profile-row"><div class="avatar avatar-indigo">GM</div><div><strong>George Mansour</strong><small>Administrator</small></div><span class="more">...</span></div>
+      </div>
     </aside>
-    <main class="main-content">
-      <header class="topbar"><div><p class="eyebrow">Tuesday, September 08, 2026</p><h1>Inspection schedule</h1></div><button class="icon-button" aria-label="Notifications">♧<span class="notification-dot"></span></button></header>
-      <section class="summary-strip" id="statusSummary" aria-label="Apartment status summary"></section>
-      <div class="today-banner" id="todayBanner"><strong>Today’s inspections</strong><p>No units scheduled for inspection today.</p></div>
-      <section class="upcoming-panel" aria-label="Upcoming inspections">
-        <div class="record-heading"><h3>Upcoming inspections</h3><span>Booked slots</span></div>
-        <div class="upcoming-list" id="upcomingList"></div>
-      </section>
-      <section class="schedule-shell">
-        <div class="schedule-panel">
-          <div class="record-heading"><h3>Book inspection slot</h3><span>Schedule</span></div>
-          <form class="schedule-form" id="slotForm">
-            <label>Apartment / unit<select id="slotUnit" required></select></label>
-            <label>Date<input id="slotDate" type="date" required></label>
-            <label>Time<input id="slotTime" type="time" required></label>
-            <label>Priority<select id="slotPriority"><option>Normal</option><option>High</option><option>Critical</option></select></label>
-            <label>Notes<textarea id="slotNotes" placeholder="Access details, inspector notes, reminders..."></textarea></label>
-            <div class="form-actions"><button class="button button-dark" id="saveSlot" type="submit">Book slot</button><button class="button button-outline" id="clearSlot" type="button">Clear</button><button class="button danger" id="deleteSlot" type="button">Delete</button></div>
-          </form>
+
+    <main class="main-content" id="overview">
+      <header class="topbar">
+        <div><p class="eyebrow">Monday, September 14, 2026</p><h1>Good morning, George <span class="sun">*</span></h1></div>
+        <div class="top-actions"><button class="icon-button" aria-label="Notifications">N<span class="notification-dot"></span></button><button class="primary-button" id="newEvaluationButton"><span>+</span> New evaluation</button></div>
+      </header>
+
+      <div class="tab-panel active" id="dashboard" data-tab-panel="dashboard">
+      <section class="hero-grid">
+        <div class="hero-panel">
+          <div class="hero-copy"><span class="section-kicker">Evaluation cycle - Q3 2026</span><h2>Make every review<br /><em>count.</em></h2><p>Track progress, capture meaningful feedback, and help every person move forward.</p><button class="dark-button" id="heroStartButton">Start an evaluation <span>↗</span></button></div>
+          <div class="hero-orbit"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><div class="orbit-core">Q3<br /><small>cycle</small></div><span class="orbit-star star-one">*</span><span class="orbit-star star-two">*</span><span class="orbit-star star-three">*</span></div>
         </div>
-        <div class="calendar-panel">
-          <div class="calendar-header"><h2 id="calendarTitle">September 2026</h2><div class="calendar-nav"><button id="prevMonth" aria-label="Previous month">‹</button><button id="todayButton">Today</button><button id="nextMonth" aria-label="Next month">›</button></div></div>
-          <div class="calendar-grid" id="calendarGrid"></div>
-        </div>
+        <div class="cycle-panel"><div class="panel-heading"><div><span class="section-kicker">Cycle progress</span><h3>Q3 evaluations</h3></div><span class="status-pill" id="cycleStatus">In progress</span></div><div class="cycle-number"><strong id="completedCount">0</strong><span>of <span id="cycleTotal">0</span><br />completed</span></div><div class="progress-track large"><span id="cycleProgressBar"></span></div><div class="cycle-footer"><span><i class="dot green"></i>Completed <b id="cycleCompletedFooter">0</b></span><span><i class="dot orange"></i>Remaining <b id="cycleRemainingFooter">0</b></span></div></div>
       </section>
+
+      <section class="stats-grid">
+        <div class="stat-card"><div class="stat-icon coral">◎</div><div><span>Total employees</span><strong id="totalEmployeesStat">0</strong><small class="trend neutral">Current directory</small></div></div>
+        <div class="stat-card"><div class="stat-icon blue">◷</div><div><span>Average score</span><strong><span id="averageScoreStat">0</span><small>/100</small></strong><small class="trend neutral">Completed evaluations</small></div></div>
+        <div class="stat-card"><div class="stat-icon yellow">↗</div><div><span>Pending reviews</span><strong id="pendingReviewsStat">0</strong><small class="trend neutral">Open evaluations</small></div></div>
+        <div class="stat-card"><div class="stat-icon mint">▤</div><div><span>Departments</span><strong id="departmentsStat">0</strong><small class="trend neutral">Current directory</small></div></div>
+      </section>
+
+      <section class="workspace-section quarterly-progress-section" id="quarterly-progress">
+        <div class="section-heading">
+          <div><span class="section-kicker">Performance movement</span><h2>Quarterly progress</h2><p class="section-description">Compare each employee's latest score across evaluation quarters.</p></div>
+          <div class="quarter-controls"><label><span id="currentQuarterControlLabel">Current quarter</span><select id="progressCurrentQuarter" aria-label="Current quarter"></select></label><span class="quarter-versus">vs</span><label><span id="previousQuarterControlLabel">Previous quarter</span><select id="progressPreviousQuarter" aria-label="Previous quarter"></select></label></div>
+        </div>
+        <div class="quarter-summary" id="quarterSummary"></div>
+        <div class="department-movement"><div class="movement-heading"><div><span class="section-kicker">Department view</span><h3>Performance movement by department</h3></div><div class="movement-legend"><span><i class="movement-swatch previous"></i><span id="previousMovementLabel">Previous quarter</span></span><span><i class="movement-swatch current"></i><span id="currentMovementLabel">Current quarter</span></span></div></div><div class="movement-chart" id="departmentMovementChart"></div></div>
+        <div class="quarter-employee-heading"><span class="section-kicker">Employee detail</span><h3>Performance by employee</h3></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th id="currentQuarterHeading">Current</th><th id="previousQuarterHeading">Previous</th><th>Change</th><th>Progress</th></tr></thead><tbody id="quarterProgressRows"></tbody></table></div>
+      </section>
+
+      <section class="bottom-grid" id="departments">
+        <div class="department-panel"><div class="section-heading compact"><div><span class="section-kicker">Across the company</span><h2>Department evaluation progress</h2></div><button class="icon-button plain" aria-label="More department options">...</button></div><div class="department-list"></div></div>
+        <div class="insight-panel"><div class="insight-graphic"><span class="graphic-line"></span><span class="graphic-line short"></span><span class="graphic-dot"></span></div><span class="section-kicker">A little insight</span><h2>Feedback is a<br /><em>growth habit.</em></h2><p>Teams that complete reviews on time show stronger follow-through on their goals.</p></div>
+      </section>
+      </div>
+
+      <div class="tab-panel" id="employeesTab" data-tab-panel="employees">
+      <section class="workspace-section" id="employees">
+        <div class="section-heading"><div><span class="section-kicker">People directory</span><h2>Employees</h2></div><div class="heading-actions"><div class="search-box"><span>Search</span><input id="employeeSearchInput" type="search" placeholder="Search employees" /></div><button class="outline-button" id="importEmployeesButton">Import CSV</button><input id="employeeCsvInput" type="file" accept=".csv,text/csv" hidden /><button class="primary-button" id="addEmployeeButton"><span>+</span> Add employee</button></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Designation</th><th>Joining date</th><th>Reporting to</th></tr></thead><tbody id="employeeRows"></tbody></table></div>
+      </section>
+      </div>
+
+      <div class="tab-panel" id="evaluationsTab" data-tab-panel="evaluations">
+      <section class="workspace-section" id="evaluations">
+        <div class="section-heading"><div><span class="section-kicker">Keep things moving</span><h2>Recent evaluations</h2></div><div class="heading-actions"><div class="search-box"><span>Search</span><input id="searchInput" type="search" placeholder="Search employees" /></div><select id="departmentFilter" aria-label="Filter by department"><option value="all">All departments</option><option value="HR">HR</option><option value="Operations">Operations</option><option value="Procurement">Procurement</option><option value="Engineering">Engineering</option><option value="IT">IT</option></select><button class="outline-button" id="viewAllButton">View all <span>→</span></button></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Evaluator</th><th>Score</th><th>Status</th><th></th></tr></thead><tbody id="evaluationRows"></tbody></table></div>
+      </section>
+      </div>
     </main>
   </div>
-  <div class="toast" id="toast">Saved to local workspace</div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="cloud-config.js"></script>
-  <script src="cloud-sync.js"></script>
-  <script src="activity.js"></script>
+
+  <div class="modal-backdrop" id="employeeModal" aria-hidden="true">
+    <section class="evaluation-modal employee-modal" role="dialog" aria-modal="true" aria-labelledby="employeeModalTitle">
+      <button class="close-button" id="closeEmployeeModal" aria-label="Close employee form">×</button>
+      <div class="modal-header"><div><span class="section-kicker">People directory</span><h2 id="employeeModalTitle">Add employee</h2><p>Enter the employee details once. They will be available for future evaluations.</p></div></div>
+      <form id="employeeForm"><div class="form-row"><label>Full name<input id="fullNameInput" type="text" required placeholder="e.g. Alex Morgan" /></label><label>Department<select id="employeeDepartmentInput" required><option value="">Select department</option><option>HR</option><option>Operations</option><option>Procurement</option><option>Engineering</option></select></label><label>Designation<input id="designationInput" type="text" required placeholder="e.g. Facility Engineer" /></label><label>Joining date<input id="joiningDateInput" type="date" required /></label><label>Reporting to<input id="reportingToInput" type="text" required placeholder="Manager name" /></label></div><div class="modal-footer"><button type="button" class="outline-button" id="cancelEmployeeModal">Cancel</button><button type="submit" class="primary-button">Save employee <span>↗</span></button></div></form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="evaluationModal" aria-hidden="true">
+    <section class="evaluation-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="close-button" id="closeModal" aria-label="Close evaluation">×</button>
+      <div class="modal-header"><div><span class="section-kicker" id="evaluationPeriodHeading">New evaluation</span><h2 id="modalTitle">Evaluate an employee</h2><p>Score each criterion from 0 to 5. Weighted points calculate automatically.</p></div><div class="modal-total"><strong id="totalScore">0</strong><span>/100</span><small>live score</small></div></div>
+      <div class="form-row"><label>Employee<select id="employeeSelect"></select></label><label>Evaluation period<div class="previous-score" id="evaluationPeriodInput">Select an evaluation date</div></label></div>
+      <div class="criteria-header"><span id="commonCriteriaTitle">Section 1 - Common Core Competencies</span><small id="commonWeight">40 points total</small></div><div class="criteria-list" id="commonCriteria"></div>
+      <div class="criteria-header department-criteria-header"><span id="departmentCriteriaTitle">Section 2 - HR Process Evaluation</span><small id="departmentWeight">30 points total</small></div><div class="criteria-list" id="departmentCriteria"></div>
+      <div class="criteria-header department-criteria-header"><span>Section 3 - Leadership Competencies</span><small id="leadershipWeight">15 points total</small></div><div class="criteria-list" id="leadershipCriteria"></div>
+      <div class="criteria-header department-criteria-header"><span>Section 4 - Communication Skills</span><small id="communicationWeight">10 points total</small></div><div class="criteria-list" id="communicationCriteria"></div>
+      <div class="criteria-header department-criteria-header"><span>Section 5 - System Knowledge &amp; Digital Competency</span><small id="systemWeight">5 points total</small></div><div class="criteria-list" id="systemCriteria"></div>
+      <div class="modal-footer"><span class="autosave"><i class="dot green"></i>Scores update automatically</span><div><button type="button" class="outline-button" id="cancelModal">Cancel</button><button type="button" class="primary-button" id="saveEvaluation">Save evaluation</button></div></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status">Evaluation saved successfully.</div>
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
