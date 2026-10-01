@@ -1,0 +1,270 @@
+.app-shell,
+.main-content,
+.sidebar,
+.workspace-grid,
+.area-layout,
+.unit-record,
+.reports-layout,
+.schedule-shell {
+  min-width: 0;
+}
+
+img,
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 28px 24px;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .unit-record {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .report-table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: relative;
+    top: auto;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .brand {
+    padding: 0 4px;
+  }
+
+  .brand-logo {
+    width: 120px;
+  }
+
+  .main-nav {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 10px;
+    white-space: nowrap;
+  }
+
+  .sidebar-bottom {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+
+  .cloud-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .cloud-controls button {
+    min-height: 38px;
+  }
+
+  .sync-status,
+  .user-card {
+    display: none;
+  }
+
+  .main-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 20px 14px;
+  }
+
+  .topbar {
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .topbar h1 {
+    font-size: 23px;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .schedule-shell,
+  .workspace-grid,
+  .area-layout,
+  .unit-record,
+  .reports-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedule-panel,
+  .calendar-panel,
+  .area-detail,
+  .report-units,
+  .report-detail,
+  .record-panel {
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .area-layout {
+    padding: 10px;
+  }
+
+  .area-list-wrap {
+    padding: 14px 10px;
+  }
+
+  .area-list {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .area-button {
+    flex: 0 0 auto;
+  }
+
+  .detail-top {
+    padding: 20px 16px;
+  }
+
+  .detail-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .detail-stats div {
+    min-width: 0;
+    flex-basis: auto;
+    padding-right: 4px;
+  }
+
+  .detail-stats .button {
+    grid-column: 1 / -1;
+    margin-left: 0;
+  }
+
+  .finding-entry {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .finding-entry .entry-label,
+  .finding-entry input,
+  .finding-entry .button {
+    grid-column: 1 / -1;
+  }
+
+  .finding-entry select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .editor-row,
+  .attachment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .editor-row .button {
+    grid-column: 1 / -1;
+  }
+
+  .profile-header-actions {
+    justify-content: flex-start;
+  }
+
+  .profile-header-actions .button {
+    flex: 1 1 auto;
+  }
+
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendar-day {
+    min-width: 0;
+    padding: 5px 2px;
+  }
+
+  .apartment-list {
+    max-width: 100%;
+  }
+
+  .report-table th,
+  .report-table td {
+    white-space: nowrap;
+  }
+
+  button,
+  input,
+  select {
+    min-height: 40px;
+  }
+
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .main-content {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 21px;
+  }
+
+  .summary-strip {
+    gap: 6px;
+  }
+
+  .status-card {
+    padding: 10px;
+  }
+
+  .calendar-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
