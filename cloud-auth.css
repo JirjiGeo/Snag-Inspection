@@ -1,0 +1,75 @@
+.cloud-auth-dialog {
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #c9d3c5;
+  border-radius: 8px;
+  background: #f6f7f1;
+  color: #26333a;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.cloud-auth-dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.cloud-auth-dialog form {
+  display: grid;
+  gap: 16px;
+}
+
+.cloud-auth-dialog h2 {
+  margin: 0;
+  font: 700 20px 'Space Grotesk', sans-serif;
+}
+
+.cloud-auth-dialog label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cloud-auth-dialog input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #aeb6bd;
+  border-radius: 5px;
+  background: #fff;
+  color: #26333a;
+  font: inherit;
+}
+
+.cloud-auth-message {
+  margin: 0;
+  min-height: 18px;
+  overflow-wrap: anywhere;
+  color: #963b32;
+  font-size: 12px;
+}
+
+.cloud-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cloud-auth-actions button {
+  min-height: 40px;
+  white-space: normal;
+}
+
+.cloud-auth-actions .button-dark {
+  background: #013220;
+  color: #fff;
+}
+
+.cloud-auth-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

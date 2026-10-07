@@ -8,6 +8,8 @@
   let saveTimer = null;
   let applyingRemote = false;
   let realtimeChannel = null;
+  let authDialog = null;
+  let authSubmitting = false;
 
   const readSnapshot = () => Object.fromEntries(stores.map((key) => [key, localStorage.getItem(key)]));
   const applySnapshot = (snapshot) => {
@@ -51,30 +53,81 @@
     if (!client) {
       const message = window.supabase ? 'Cloud login is still loading. Please click again.' : 'Supabase client could not load. Check your internet connection and refresh the page.';
       showToast(message);
-      window.alert(message);
       return;
     }
     if (user) {
-      await client.auth.signOut();
+      const { error } = await client.auth.signOut();
+      if (error) return showToast(`Sign out failed: ${error.message}`);
       user = null;
+      if (realtimeChannel) {
+        client.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+      clearTimeout(saveTimer);
       renderStatus();
       return;
     }
-    const email = window.prompt('Cloud account email:');
-    const password = email && window.prompt('Cloud account password (minimum 6 characters):');
-    if (!email || !password) return;
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
-    if (error && error.message.toLowerCase().includes('invalid login credentials')) {
-      const create = window.confirm('No matching account. Create this cloud account now?');
-      if (create) {
-        const result = await client.auth.signUp({ email, password });
-        if (result.error) return showToast(`Cloud signup failed: ${result.error.message}`);
-        user = result.data.user;
+    if (!authDialog.open) {
+      authDialog.querySelector('form').reset();
+      authDialog.querySelector('[role="alert"]').textContent = '';
+      authDialog.showModal();
+    }
+  };
+  const submitAuth = async (event) => {
+    event.preventDefault();
+    if (authSubmitting || !client) return;
+    const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+    const creating = event.submitter?.value === 'signup';
+    const message = authDialog.querySelector('[role="alert"]');
+    const credentials = { email: form.elements.email.value.trim(), password: form.elements.password.value };
+    authSubmitting = true;
+    message.textContent = creating ? 'Creating account...' : 'Signing in...';
+    form.querySelectorAll('button').forEach((button) => { button.disabled = true; });
+    try {
+      const { data, error } = creating
+        ? await client.auth.signUp(credentials)
+        : await client.auth.signInWithPassword(credentials);
+      if (error) {
+        message.textContent = error.message;
+        return;
       }
-    } else if (error) return showToast(`Cloud login failed: ${error.message}`);
-    else user = data.user;
-    await loadSnapshot();
-    renderStatus();
+      form.elements.password.value = '';
+      if (!data.session) {
+        message.textContent = 'Check your email to confirm your account, then sign in.';
+        return;
+      }
+      user = data.session.user;
+      renderStatus();
+      await loadSnapshot();
+      subscribeToChanges();
+      authDialog.close();
+    } catch (error) {
+      message.textContent = `Cloud login failed: ${error.message}`;
+    } finally {
+      authSubmitting = false;
+      form.querySelectorAll('button').forEach((button) => { button.disabled = false; });
+    }
+  };
+  const createAuthDialog = () => {
+    if (authDialog) return;
+    const styles = document.createElement('link');
+    styles.rel = 'stylesheet';
+    styles.href = 'cloud-auth.css';
+    document.head.append(styles);
+    authDialog = document.createElement('dialog');
+    authDialog.id = 'cloudAuthDialog';
+    authDialog.className = 'cloud-auth-dialog';
+    authDialog.setAttribute('aria-labelledby', 'cloudAuthTitle');
+    authDialog.innerHTML = '<form><h2 id="cloudAuthTitle">Cloud login</h2><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><p class="cloud-auth-message" role="alert" aria-live="polite"></p><div class="cloud-auth-actions"><button class="button button-outline" type="button" data-auth-cancel>Cancel</button><button class="button button-outline" type="submit" value="signup">Create account</button><button class="button button-dark" type="submit" value="signin">Sign in</button></div></form>';
+    authDialog.querySelector('form').addEventListener('submit', submitAuth);
+    authDialog.querySelector('[data-auth-cancel]').addEventListener('click', () => authDialog.close());
+    authDialog.addEventListener('cancel', (event) => { if (authSubmitting) event.preventDefault(); });
+    authDialog.addEventListener('close', () => {
+      authDialog.querySelector('form').reset();
+      document.querySelector('#cloudAuthButton')?.focus();
+    });
+    document.body.append(authDialog);
   };
   const loadSnapshot = async () => {
     if (!client || !user) return;
@@ -107,6 +160,7 @@
       container.prepend(panel);
       button = document.querySelector('#cloudAuthButton');
     }
+    createAuthDialog();
     button.onclick = auth;
     renderStatus();
   };
