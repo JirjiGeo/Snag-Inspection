@@ -10,6 +10,51 @@
   let realtimeChannel = null;
   let authDialog = null;
   let authSubmitting = false;
+  let saving = false;
+  let savePending = false;
+  const documentBucket = 'snag-documents';
+
+  const uploadDocument = async (file, unitId) => {
+    if (!client || !user) return null;
+    const ownerId = user.id;
+    const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    if (user?.id !== ownerId) throw new Error('Cloud account changed. Retry the upload.');
+    const cloudPath = `${ownerId}/${unitId}/${hash}`;
+    const { error } = await client.storage.from(documentBucket).upload(cloudPath, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+    if (error) throw new Error(`File upload failed: ${error.message}. Check the private snag-documents bucket and its access policies.`);
+    return { name: file.name, type: file.type, bucket: documentBucket, cloudPath };
+  };
+  const migrateDocuments = async () => {
+    const ownerId = user.id;
+    const apartmentKey = 'snagline-apartment-record';
+    const state = JSON.parse(localStorage.getItem(apartmentKey) || '{}');
+    const replacements = [];
+    for (const apartment of state.apartments || []) {
+      for (const [type, files] of Object.entries(apartment.documents || {})) {
+        for (const document of files) {
+          if (document.cloudPath || !document.data?.startsWith('data:')) continue;
+          const response = await fetch(document.data);
+          const blob = await response.blob();
+          const file = new File([blob], document.name, { type: document.type || blob.type });
+          if (user?.id !== ownerId) throw new Error('Cloud account changed. Retry cloud saving.');
+          const uploaded = await uploadDocument(file, apartment.id);
+          replacements.push({ unitId: apartment.id, type, data: document.data, uploaded });
+        }
+      }
+    }
+    if (!replacements.length) return;
+    if (user?.id !== ownerId) throw new Error('Cloud account changed. Retry cloud saving.');
+    const latest = JSON.parse(localStorage.getItem(apartmentKey) || '{}');
+    for (const replacement of replacements) {
+      const unit = latest.apartments?.find((apartment) => apartment.id === replacement.unitId);
+      const files = unit?.documents?.[replacement.type] || [];
+      const index = files.findIndex((document) => document.data === replacement.data);
+      if (index >= 0) files[index] = replacement.uploaded;
+    }
+    localStorage.setItem(apartmentKey, JSON.stringify(latest));
+    window.dispatchEvent(new Event('snag-cloud-documents-updated'));
+  };
 
   const readSnapshot = () => Object.fromEntries(stores.map((key) => [key, localStorage.getItem(key)]));
   const applySnapshot = (snapshot) => {
@@ -22,18 +67,37 @@
   };
   const saveSnapshot = async () => {
     if (!client || !user || applyingRemote) return;
-    const snapshot = readSnapshot();
-    const { error } = await client.from('snag_workspaces').upsert({ user_id: user.id, snapshot, updated_at: new Date().toISOString() });
-    if (error) showToast(`Cloud save failed: ${error.message}`);
-    else {
+    if (saving) {
+      savePending = true;
+      return;
+    }
+    saving = true;
+    const ownerId = user.id;
+    try {
+      await migrateDocuments();
+      if (user?.id !== ownerId) throw new Error('Cloud account changed. Retry cloud saving.');
+      const snapshot = readSnapshot();
+      const { error } = await client.from('snag_workspaces').upsert({ user_id: ownerId, snapshot, updated_at: new Date().toISOString() });
+      if (error) throw error;
       localStorage.setItem(syncKey, new Date().toISOString());
       showToast('Saved to cloud');
+    } catch (error) {
+      showToast(`Cloud save failed: ${error.message}`);
+    } finally {
+      saving = false;
+      if (savePending) {
+        savePending = false;
+        queueSave();
+      }
     }
   };
   const queueSave = () => {
     if (!client || !user || applyingRemote) return;
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(saveSnapshot, 700);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      saveSnapshot();
+    }, 700);
   };
   const showToast = (message) => {
     const toast = document.querySelector('#toast');
@@ -143,6 +207,7 @@
     realtimeChannel = client.channel(`snag-workspace-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'snag_workspaces', filter: `user_id=eq.${user.id}` }, (payload) => {
         if (payload.new?.snapshot && !applyingRemote) {
+          if (saving || savePending || saveTimer) return;
           applySnapshot(payload.new.snapshot);
           showToast('Updated from another device');
         }
@@ -188,6 +253,16 @@
     }
   };
   window.snagCloudSave = queueSave;
+  window.snagCloudUploadDocument = uploadDocument;
+  window.snagCloudOpenDocument = async (document) => {
+    if (!client || !user) throw new Error('Sign in to cloud to open this document.');
+    const { data, error } = await client.storage.from(document.bucket || documentBucket).createSignedUrl(document.cloudPath, 60, { download: document.name });
+    if (error) throw new Error(`Document download failed: ${error.message}`);
+    const link = window.document.createElement('a');
+    link.href = data.signedUrl;
+    link.download = document.name;
+    link.click();
+  };
   window.addEventListener('storage', (event) => { if (stores.includes(event.key)) queueSave(); });
   window.snagCloudAuth = auth;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });

@@ -83,10 +83,10 @@ function updatePaymentStatus() {
 }
 
 function inspectionSchedule(unitId, slots) {
-  const bookings = slots.filter((slot) => slot.unitId === unitId && slot.date && slot.time)
+  const bookings = slots.filter((slot) => slot.unitId === unitId && slot.date)
     .sort((first, second) => `${first.date}T${first.time}`.localeCompare(`${second.date}T${second.time}`));
   const now = new Date();
-  return bookings.find((slot) => new Date(`${slot.date}T${slot.time}`) >= now) || bookings[bookings.length - 1];
+  return bookings.find((slot) => new Date(`${slot.date}T${slot.time || '23:59'}`) >= now) || bookings[bookings.length - 1];
 }
 
 function renderApartmentList() {
@@ -105,7 +105,7 @@ function renderApartmentList() {
         || `${first.schedule?.date || ''}T${first.schedule?.time || ''}`.localeCompare(`${second.schedule?.date || ''}T${second.schedule?.time || ''}`);
     });
   $('#apartmentList').innerHTML = visible.length ? visible.map(({ apartment, schedule }) => {
-    const date = schedule ? new Date(`${schedule.date}T${schedule.time}`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not scheduled';
+    const date = schedule ? new Date(`${schedule.date}T${schedule.time || '00:00'}`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not scheduled';
     const status = apartment.record.unitStatus || 'Quote For Approval';
     const paymentStatus = apartment.record.paymentStatus || 'Payment Pending';
     const upcoming = schedule?.date === reminderKey;
@@ -259,29 +259,51 @@ function saveRecord(show = true) {
   persist(show);
 }
 
-function fileToDocument(file) {
-  return new Promise((resolve) => {
+async function fileToDocument(file, unitId) {
+  const uploaded = await window.snagCloudUploadDocument?.(file, unitId);
+  if (uploaded) return uploaded;
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve({ name: file.name, type: file.type, data: reader.result });
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.onabort = () => reject(new Error('File reading was cancelled'));
     reader.readAsDataURL(file);
   });
 }
 
 async function storeFiles(files) {
-  if (!documentTarget) return;
+  if (!documentTarget || !files.length) return;
   const apartment = activeApartment();
-  apartment.documents[documentTarget.type] = apartment.documents[documentTarget.type] || [];
-  const converted = await Promise.all([...files].map(fileToDocument));
-  if (typeof documentTarget.index === 'number') apartment.documents[documentTarget.type][documentTarget.index] = converted[0];
-  else apartment.documents[documentTarget.type].push(...converted);
-  persist();
-  renderDocuments();
+  const target = { ...documentTarget };
+  const previous = apartment.documents[target.type] || [];
+  showToast('Uploading documents...');
+  const converted = await Promise.all([...files].map((file) => fileToDocument(file, apartment.id)));
+  const next = [...previous];
+  if (typeof target.index === 'number') next[target.index] = converted[0];
+  else next.push(...converted);
+  apartment.documents[target.type] = next;
+  try {
+    persist(false);
+  } catch (error) {
+    apartment.documents[target.type] = previous;
+    throw error;
+  }
+  if (activeApartment().id === apartment.id) renderDocuments();
+  showToast('Documents uploaded');
 }
 
-function openDocument(target) {
+async function openDocument(target) {
   const [type, index] = target.split(':');
   const file = activeApartment().documents[type]?.[Number(index)];
   if (!file) return;
+  if (file.cloudPath) {
+    try {
+      await window.snagCloudOpenDocument(file);
+    } catch (error) {
+      showToast(error.message);
+    }
+    return;
+  }
   const link = document.createElement('a');
   link.href = file.data;
   link.download = file.name;
@@ -312,7 +334,7 @@ function addUnit() {
 function createProfile() {
   if (!profileEditing) return;
   if (!$('#quotedAmount').reportValidity() || !$('#calculatedArea').reportValidity()) return;
-  if (!$('#inspectionDate').reportValidity() || !$('#inspectionTime').reportValidity()) return;
+  if (scheduleDirty && (!$('#inspectionDate').reportValidity() || !$('#inspectionTime').reportValidity())) return;
   saveRecord(false);
   profileEditing = false;
   persist(false);
@@ -386,14 +408,19 @@ function renderAll(show = true) {
 }
 
 $('#documentInput').addEventListener('change', async (event) => {
-  await storeFiles(event.target.files);
-  event.target.value = '';
+  try {
+    await storeFiles(event.target.files);
+  } catch (error) {
+    showToast(error.name === 'QuotaExceededError' ? 'Browser storage is full. Sign in to cloud and retry.' : error.message);
+  } finally {
+    event.target.value = '';
+  }
 });
 $('#addUnit').addEventListener('click', addUnit);
 $('#backToApartments').addEventListener('click', () => {
   if (profileEditing) {
     if (!$('#quotedAmount').reportValidity() || !$('#calculatedArea').reportValidity()) return;
-    if (!$('#inspectionDate').reportValidity() || !$('#inspectionTime').reportValidity()) return;
+    if (scheduleDirty && (!$('#inspectionDate').reportValidity() || !$('#inspectionTime').reportValidity())) return;
     saveRecord(false);
   }
   detailsOpen = false;
@@ -408,6 +435,14 @@ $('#deleteApartment').addEventListener('click', deleteApartment);
 $('#openInspection').addEventListener('click', openInspection);
 $('#unitSearch').addEventListener('input', renderApartmentList);
 window.addEventListener('focus', renderApartmentList);
+window.addEventListener('snag-cloud-documents-updated', () => {
+  const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  for (const saved of stored.apartments || []) {
+    const apartment = apartments.find((unit) => unit.id === saved.id);
+    if (apartment) apartment.documents = saved.documents || {};
+  }
+  renderDocuments();
+});
 window.addEventListener('storage', (event) => {
   if (event.key === scheduleKey) {
     renderApartmentList();

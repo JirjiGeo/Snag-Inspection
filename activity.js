@@ -56,10 +56,10 @@ function renderBanner() {
 function renderUpcoming() {
   const now = new Date();
   const upcoming = slots
-    .filter((slot) => new Date(`${slot.date}T${slot.time}`) >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
+    .filter((slot) => new Date(`${slot.date}T${slot.time || '00:00'}`) >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
     .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
   $('#upcomingList').innerHTML = upcoming.length
-    ? upcoming.map((slot) => `<div class="upcoming-item" data-priority="${slot.priority}"><button class="slot-summary" data-slot-id="${slot.id}"><strong>${unitName(slot.unitId)}</strong><span class="slot-meta">${slot.date} · ${slot.time} · ${slot.priority}${slot.notes ? ` · ${slot.notes}` : ''}</span></button><div class="upcoming-actions"><button class="inspect" data-open-inspection="${slot.unitId}">Open inspection</button></div></div>`).join('')
+    ? upcoming.map((slot) => `<div class="upcoming-item" data-priority="${slot.priority}"><button class="slot-summary" data-slot-id="${slot.id}"><strong>${unitName(slot.unitId)}</strong><span class="slot-meta">${slot.date} · ${slot.time || 'Time not set'} · ${slot.priority}${slot.notes ? ` · ${slot.notes}` : ''}</span></button><div class="upcoming-actions"><button class="inspect" data-open-inspection="${slot.unitId}">Open inspection</button></div></div>`).join('')
     : '<p class="upcoming-empty">No upcoming inspections booked.</p>';
   document.querySelectorAll('.slot-summary').forEach((item) => item.addEventListener('click', () => editSlot(item.dataset.slotId)));
   document.querySelectorAll('[data-open-inspection]').forEach((button) => button.addEventListener('click', () => openInspection(button.dataset.openInspection)));
