@@ -8,6 +8,12 @@ let activeUnitId = apartments[0]?.id || null;
 
 const reportSectionsKey = 'snagline-report-sections';
 let reportSections = JSON.parse(localStorage.getItem(reportSectionsKey) || '{}');
+const uploadedReportsKey = 'snagline-uploaded-reports';
+let uploadedReports = JSON.parse(localStorage.getItem(uploadedReportsKey) || '{}');
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function getReportSections(unitId) {
   return reportSections[unitId] || { projectOverview: '', propertyDetails: '', inspectionDateTeam: '', inspectionScope: '', inspectionHighlights: '' };
@@ -61,11 +67,20 @@ function renderReport() {
   const unitFindingsList = unitFindings(unit.id);
   const meta = inspectionMeta[unit.id] || {};
   const sections = getReportSections(unit.id);
+  const uploadedReport = uploadedReports[unit.id];
   const severityCounts = ['Low', 'Medium', 'High', 'Critical'].map((sev) => `${sev}: ${unitFindingsList.filter((f) => f.severity === sev).length}`).join(' · ');
   detail.innerHTML = `
     <h3>${unit.name}</h3>
     <p class="report-meta">${unit.record?.buildingName || '—'} · ${unit.record?.unitBedrooms || '—'} · ${unit.record?.unitLayout || '—'} · ${unit.record?.outdoorArea || '—'} · Inspected by: ${meta.inspectedBy || '—'} ${meta.date ? `· ${meta.date}` : ''}${meta.time ? ` ${meta.time}` : ''}</p>
     <div class="report-actions"><button class="button button-dark" id="exportUnitReport">Export report (.xls)</button><button class="button button-dark" id="exportUnitWord">Export report (.docx)</button></div>
+    <section class="uploaded-report-panel" aria-label="Uploaded PDF report">
+      <div><h4>Uploaded PDF report</h4><p class="report-meta">${uploadedReport ? `Current file: ${escapeHtml(uploadedReport.name)}` : 'No PDF uploaded for this unit.'}</p></div>
+      <div class="report-actions">
+        <label class="button button-dark upload-report-button" for="reportPdfInput">Upload PDF</label>
+        <input id="reportPdfInput" type="file" accept="application/pdf,.pdf" hidden>
+        ${uploadedReport ? `<a class="button button-dark" href="${uploadedReport.data}" download="${escapeHtml(uploadedReport.name)}">Download PDF</a><button class="button button-dark" id="removeUploadedReport" type="button">Remove</button>` : ''}
+      </div>
+    </section>
     
     <div style="margin-top: 20px; padding: 16px; background: #f0f1f2; border-radius: 8px;">
       <h4 style="margin-top: 0;">Report Sections</h4>
@@ -95,8 +110,45 @@ function renderReport() {
     ${unitFindingsList.length ? `<table class="report-table"><thead><tr><th>Area</th><th>Finding</th><th>Level</th><th>Severity</th><th>Status</th><th>Photos</th></tr></thead><tbody>${unitFindingsList.map((finding) => `<tr><td>${finding.area}</td><td><strong>${finding.text}</strong>${finding.note ? `<br><span class="report-meta">${finding.note}</span>` : ''}</td><td>${finding.level || '—'}</td><td><span class="sev sev-${(finding.severity || 'Medium').toLowerCase()}">${finding.severity || 'Medium'}</span></td><td>${finding.status || 'Open'}</td><td>${(finding.attachments || []).length}</td></tr>`).join('')}</tbody></table>` : '<p class="empty-report">No findings recorded for this unit.</p>'}`;
   
   $('#exportUnitReport').addEventListener('click', () => exportReport(unit, unitFindingsList, meta));
+  $('#reportPdfInput').addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('PDF must be 2 MB or smaller');
+      event.target.value = '';
+      return;
+    }
+    const signature = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer());
+    if (signature !== '%PDF-') {
+      showToast('Choose a valid PDF file');
+      event.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        uploadedReports[unit.id] = { name: file.name, data: reader.result, uploadedAt: new Date().toISOString() };
+        localStorage.setItem(uploadedReportsKey, JSON.stringify(uploadedReports));
+        window.snagCloudSave?.();
+        showToast('PDF report uploaded');
+        renderAll();
+      } catch (error) {
+        showToast(error.name === 'QuotaExceededError' ? 'Not enough browser storage for this PDF' : 'Could not save the PDF report');
+      }
+    };
+    reader.onerror = () => showToast('Could not read the PDF file');
+    reader.readAsDataURL(file);
+  });
+  $('#removeUploadedReport')?.addEventListener('click', () => {
+    delete uploadedReports[unit.id];
+    localStorage.setItem(uploadedReportsKey, JSON.stringify(uploadedReports));
+    window.snagCloudSave?.();
+    showToast('PDF report removed');
+    renderAll();
+  });
   $('#exportUnitWord').addEventListener('click', () => {
     const updatedSections = {
+      ...getReportSections(unit.id),
       projectOverview: $('#projectOverviewField').value,
       propertyDetails: $('#propertyDetailsField').value,
       inspectionDateTeam: $('#inspectionDateTeamField').value,
@@ -112,6 +164,7 @@ function renderReport() {
     if (field) {
       field.addEventListener('change', () => {
         const updatedSections = {
+          ...getReportSections(unit.id),
           projectOverview: $('#projectOverviewField').value,
           propertyDetails: $('#propertyDetailsField').value,
           inspectionDateTeam: $('#inspectionDateTeamField').value,

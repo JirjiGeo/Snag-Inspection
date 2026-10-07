@@ -1,7 +1,7 @@
 (() => {
   const config = window.SNAG_CLOUD_CONFIG || {};
   const configured = Boolean(config.url && config.anonKey);
-  const stores = ['snagline-apartment-record', 'snagline-inspection-state', 'snagline-inspection-schedule', 'snagline-report-sections', 'snagline-linked-apartment'];
+  const stores = ['snagline-apartment-record', 'snagline-inspection-state', 'snagline-inspection-schedule', 'snagline-report-sections', 'snagline-uploaded-reports', 'snagline-linked-apartment'];
   const syncKey = 'snagline-cloud-last-sync';
   let client = null;
   let user = null;

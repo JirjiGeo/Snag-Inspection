@@ -34,10 +34,14 @@ function renderUnits() {
 }
 
 function renderStatusSummary() {
-  const stages = ['To be quoted', 'Quoted', 'Paid', 'To be inspected', 'Inspected', 'Report issued', 'Closed'];
+  const stages = ['Quote For Approval', 'For Inspection', 'Completed', 'Cancelled'];
+  const legacyStages = { 'To be quoted': 'Quote For Approval', Quoted: 'Quote For Approval', Paid: 'For Inspection', 'To be inspected': 'For Inspection', Inspected: 'Completed', 'Report issued': 'Completed', Closed: 'Completed' };
   $('#statusSummary').innerHTML = stages.map((stage, index) => {
-    const count = apartments.filter((unit) => (unit.record?.unitStatus || 'To be quoted') === stage).length;
-    return `<div class="status-card ${index === 3 ? 'accent' : ''}"><span>${stage}</span><strong>${String(count).padStart(2, '0')}</strong></div>`;
+    const count = apartments.filter((unit) => {
+      const status = unit.record?.unitStatus || 'Quote For Approval';
+      return (legacyStages[status] || status) === stage;
+    }).length;
+    return `<div class="status-card ${stage === 'For Inspection' ? 'accent' : ''}"><span>${stage}</span><strong>${String(count).padStart(2, '0')}</strong></div>`;
   }).join('');
 }
 
