@@ -10,10 +10,13 @@
     body,.app-shell,.main-content{background:#f6f7f1}.sidebar{background:#013220;border-right:0}.brand{color:#fff}.nav-item{color:#cbd8d0}.nav-item.active{background:#eaf0e7;color:#013220}.nav-item.active .nav-icon{color:#036307}
     .main-content{flex:1;width:auto;max-width:none;margin:0;padding:38px 46px;min-width:0}
     .financials-table-wrap{margin-top:24px;overflow-x:auto}
-    .financials-table{width:100%;min-width:800px;border-collapse:collapse;table-layout:fixed;font:500 13px 'DM Sans';color:#26333a}
+    .financials-table{width:100%;min-width:960px;border-collapse:collapse;table-layout:fixed;font:500 13px 'DM Sans';color:#26333a}
     .financials-table th,.financials-table td{padding:16px;border-bottom:1px solid #dfe6dc;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
     .financials-table th:first-child,.financials-table td:first-child{text-align:left}
-    .financials-table th:nth-child(2),.financials-table tbody td:nth-child(2){text-align:left}
+    .financials-table th:nth-child(2),.financials-table th:nth-child(3),.financials-table tbody td:nth-child(2),.financials-table tbody td:nth-child(3){text-align:left}
+    .financials-table .payment-status{font-weight:700}
+    .financials-table .payment-status.is-paid{color:#176735}
+    .financials-table .payment-status.is-pending{color:#a34b00}
     .financials-table thead{background:#edf0f1;color:#33414a}
     .financials-table thead th{font-weight:700;vertical-align:bottom}
     .financials-table tbody tr:nth-child(even){background:#f0f2ed}
@@ -39,9 +42,9 @@
       <header class="topbar"><h1>Financials</h1></header>
       <section class="financials-table-wrap" aria-label="Unit financials" tabindex="0">
         <table class="financials-table" aria-label="Unit amounts and totals">
-          <thead><tr><th scope="col">Unit Number</th><th scope="col">Unit Size</th><th scope="col">Invoiced Amount</th><th scope="col">Qbel Charges W VAT</th><th scope="col">First Bridge W VAT</th></tr></thead>
+          <thead><tr><th scope="col">Unit Number</th><th scope="col">Payment Status</th><th scope="col">Unit Size</th><th scope="col">Invoiced Amount</th><th scope="col">Qbel Charges W VAT</th><th scope="col">First Bridge W VAT</th></tr></thead>
           <tbody id="financialRows"></tbody>
-          <tfoot><tr><th scope="row" colspan="2">Total</th><td id="invoicedTotal">0.00</td><td id="qbelTotal">0.00</td><td id="firstBridgeTotal">0.00</td></tr></tfoot>
+          <tfoot><tr><th scope="row" colspan="3">Total</th><td id="invoicedTotal">0.00</td><td id="qbelTotal">0.00</td><td id="firstBridgeTotal">0.00</td></tr></tfoot>
         </table>
       </section>
     </main>

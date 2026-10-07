@@ -38,8 +38,12 @@
     .slot-summary{min-width:0;width:100%;border:0;padding:0;background:transparent;color:var(--schedule-ink);text-align:left;font:600 13px 'DM Sans';cursor:pointer;overflow-wrap:anywhere}
     .upcoming-item .slot-meta{display:block;color:var(--schedule-muted);font-size:12px;line-height:1.5;margin-top:5px}
     .upcoming-actions .inspect{background:var(--schedule-green);color:#fff;min-height:40px;font-size:11px;padding:8px 12px}
-    .upcoming-item[data-priority='High']{border-left-color:#b9791c}
-    .upcoming-item[data-priority='Critical']{border-left-color:#b8403d}
+    .upcoming-item[data-payment-status='Paid']{border-left-color:#176735}
+    .upcoming-item[data-payment-status='Payment Pending']{border-left-color:#b9791c}
+    .payment-label,.schedule-form output{font-weight:700}
+    .payment-label.is-paid,.schedule-form output.is-paid{color:#176735}
+    .payment-label.is-pending,.schedule-form output.is-pending{color:#a34b00}
+    .schedule-form output{display:block;box-sizing:border-box;min-height:42px;padding:10px;background:#fff;border:1px solid #b9c9be;border-radius:5px;font:600 14px 'DM Sans',sans-serif}
     .upcoming-empty{color:var(--schedule-muted);padding:12px 0}
     .schedule-shell{grid-template-columns:minmax(260px,300px) minmax(0,1fr);gap:28px;margin-top:4px;align-items:start}
     .schedule-panel,.calendar-panel{background:transparent;border:0;border-radius:0;padding:18px 0;min-width:0}
@@ -64,8 +68,9 @@
     .day-cell.today{outline:2px solid var(--schedule-accent);outline-offset:-2px;background:#f1f7f0}
     .day-number{font-size:12px;margin-bottom:8px}
     .slot{background:#e6f1e8;border-left:3px solid var(--schedule-accent);color:#163d24;white-space:normal;overflow-wrap:anywhere;line-height:1.5;padding:7px 6px;min-height:48px}
-    .slot.high{background:#fff0d4;border-left-color:#b9791c;color:#684515}
-    .slot.critical{background:#fbe2e0;border-left-color:#b8403d;color:#792d2b}
+    .slot.paid{background:#e6f1e8;border-left-color:#176735;color:#163d24}
+    .slot.pending{background:#fff0d4;border-left-color:#b9791c;color:#684515}
+    .slot .payment-label{display:block;margin-top:3px}
     .slot .time{color:#4a5e54;line-height:1.5}
     button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--schedule-accent);outline-offset:2px}
     .topbar h1,.status-card strong,.today-banner strong,.record-heading h3,.calendar-header h2{font-family:'Space Grotesk',sans-serif}
@@ -102,7 +107,7 @@
             <label>Apartment / unit<select id="slotUnit" required></select></label>
             <label>Date<input id="slotDate" type="date" required></label>
             <label>Time<input id="slotTime" type="time" required></label>
-            <label>Priority<select id="slotPriority"><option>Normal</option><option>High</option><option>Critical</option></select></label>
+            <label>Payment status<output id="slotPaymentStatus" aria-live="polite"></output></label>
             <label>Notes<textarea id="slotNotes" placeholder="Access details, inspector notes, reminders..."></textarea></label>
             <div class="form-actions"><button class="button button-dark" id="saveSlot" type="submit">Book slot</button><button class="button button-outline" id="clearSlot" type="button">Clear</button><button class="button danger" id="deleteSlot" type="button">Delete</button></div>
           </form>

@@ -16,6 +16,11 @@ function renderFinancials() {
     const unit = document.createElement('td');
     unit.textContent = apartment.name || 'Not set';
     row.append(unit);
+    const paid = apartment.record?.paymentStatus === 'Paid';
+    const payment = document.createElement('td');
+    payment.textContent = paid ? 'Paid' : 'Payment Pending';
+    payment.className = `payment-status ${paid ? 'is-paid' : 'is-pending'}`;
+    row.append(payment);
     const space = document.createElement('td');
     space.textContent = apartment.record?.unitSpace || '-';
     row.append(space);
@@ -31,7 +36,7 @@ function renderFinancials() {
   if (!rows.length) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 5;
+    cell.colSpan = 6;
     cell.className = 'empty-financials';
     cell.textContent = 'No units yet.';
     row.append(cell);
