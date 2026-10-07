@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snagline | Financials</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="responsive.css">
+  <style>
+    body,.app-shell,.main-content{background:#f6f7f1}.sidebar{background:#013220;border-right:0}.brand{color:#fff}.nav-item{color:#cbd8d0}.nav-item.active{background:#eaf0e7;color:#013220}.nav-item.active .nav-icon{color:#036307}
+    .main-content{flex:1;width:auto;max-width:none;margin:0;padding:38px 46px;min-width:0}
+    .financials-table-wrap{margin-top:24px;overflow-x:auto}
+    .financials-table{width:100%;min-width:800px;border-collapse:collapse;table-layout:fixed;font:500 13px 'DM Sans';color:#26333a}
+    .financials-table th,.financials-table td{padding:16px;border-bottom:1px solid #dfe6dc;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+    .financials-table th:first-child,.financials-table td:first-child{text-align:left}
+    .financials-table th:nth-child(2),.financials-table tbody td:nth-child(2){text-align:left}
+    .financials-table thead{background:#edf0f1;color:#33414a}
+    .financials-table thead th{font-weight:700;vertical-align:bottom}
+    .financials-table tbody tr:nth-child(even){background:#f0f2ed}
+    .financials-table tfoot{background:#e6ebdf;color:#013220;font-weight:700;border-top:2px solid #9eafa2}
+    .financials-table td.empty-financials{text-align:center;color:#5f6d77;padding:32px}
+    @media(max-width:700px){.main-content{padding:22px 14px}.financials-table th,.financials-table td{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span>QBEL</span></div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-item" href="apartments.html"><span class="nav-icon">⌂</span> Apartments</a>
+        <a class="nav-item" href="activity.html"><span class="nav-icon">◷</span> Schedules</a>
+        <a class="nav-item" href="inspection.html"><span class="nav-icon">▦</span> Inspections</a>
+        <a class="nav-item" href="reports.html"><span class="nav-icon">□</span> Reports</a>
+        <a class="nav-item active" href="financials.html"><span class="nav-icon" aria-hidden="true">$</span> Financials</a>
+      </nav>
+      <div class="sidebar-bottom"><div class="cloud-controls"><span id="cloudStatus">Cloud: checking...</span><button id="cloudAuthButton" type="button">Cloud login</button></div><div class="sync-status"><span class="sync-dot"></span><span><strong>Local workspace</strong><small>Changes saved automatically</small></span></div><button class="user-card"><span class="avatar">GM</span><span><strong>Georges Mansour</strong><small>Site inspector</small></span><span class="more">•••</span></button></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><h1>Financials</h1></header>
+      <section class="financials-table-wrap" aria-label="Unit financials" tabindex="0">
+        <table class="financials-table" aria-label="Unit amounts and totals">
+          <thead><tr><th scope="col">Unit Number</th><th scope="col">Unit Size</th><th scope="col">Invoiced Amount</th><th scope="col">Qbel Charges W VAT</th><th scope="col">First Bridge W VAT</th></tr></thead>
+          <tbody id="financialRows"></tbody>
+          <tfoot><tr><th scope="row" colspan="2">Total</th><td id="invoicedTotal">0.00</td><td id="qbelTotal">0.00</td><td id="firstBridgeTotal">0.00</td></tr></tfoot>
+        </table>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast">Saved to local workspace</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="cloud-config.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script src="financials.js"></script>
+</body>
+</html>
