@@ -392,6 +392,67 @@ function deleteApartment() {
   showToast('Apartment deleted');
 }
 
+function escapeSpreadsheetXml(value) {
+  return String(value ?? '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function exportApartments() {
+  const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  const allApartments = stored.apartments || apartments;
+  const scheduleSlots = JSON.parse(localStorage.getItem(scheduleKey) || '{}').slots || [];
+  const fields = [
+    ['soNumber', 'SO Number'], ['ownerName', 'Owner Name'], ['ownerPhone', 'Phone Number'],
+    ['ownerEmail', 'Email'], ['buildingName', 'Building Name'], ['unitSpace', 'Unit Size'],
+    ['unitBedrooms', 'Bedrooms'], ['unitLayout', 'Layout'], ['outdoorArea', 'Outdoor Area'],
+    ['unitStatus', 'Unit Status'], ['inspectedBy', 'Inspected By'], ['inspectionStatus', 'Inspection Status'],
+    ['inspectionDate', 'Inspection Date'], ['inspectionTime', 'Inspection Time'],
+    ['quotedAmount', 'Quoted Amount'], ['invoicedAmount', 'Invoiced Amount'],
+    ['calculatedArea', 'Calculated Area'], ['qbelChargesWithoutVat', 'Qbel Charges Without VAT'],
+    ['qbelChargesWithVat', 'Qbel Charges With VAT'], ['firstBridgeWithoutVat', 'First Bridge Without VAT'],
+    ['firstBridgeWithVat', 'First Bridge With VAT'], ['paymentStatus', 'Payment Status'],
+    ['paymentMethod', 'Payment Method']
+  ];
+  const rows = [[{ value: 'Unit Number' }, ...fields.map(([, label]) => ({ value: label }))]];
+  allApartments.forEach((apartment) => {
+    const record = apartment.record || {};
+    const bookings = scheduleSlots.filter((slot) => slot.unitId === apartment.id && slot.date)
+      .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`));
+    const now = new Date();
+    const schedule = bookings.find((slot) => new Date(`${slot.date}T${slot.time || '23:59'}`) >= now) || bookings[bookings.length - 1];
+    const values = { ...record, inspectionDate: schedule?.date || '', inspectionTime: schedule?.time || '' };
+    rows.push([
+      { value: apartment.name || 'Not set' },
+      ...fields.map(([field]) => {
+        const value = values[field] ?? '';
+        const isNumeric = ['quotedAmount', 'invoicedAmount', 'calculatedArea', 'qbelChargesWithoutVat', 'qbelChargesWithVat', 'firstBridgeWithoutVat', 'firstBridgeWithVat'].includes(field);
+        return isNumeric && value !== '' && Number.isFinite(Number(value))
+          ? { value: Number(value), numeric: true }
+          : { value };
+      })
+    ]);
+  });
+  if (!allApartments.length) rows.push([{ value: 'No apartments recorded' }]);
+  const cell = ({ value, numeric }) => numeric && Number.isFinite(Number(value))
+    ? `<Cell><Data ss:Type="Number">${Number(value)}</Data></Cell>`
+    : `<Cell><Data ss:Type="String">${escapeSpreadsheetXml(value)}</Data></Cell>`;
+  const sheetRows = rows.map((row) => `<Row>${row.map(cell).join('')}</Row>`).join('');
+  const workbook = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Apartment Details"><Table>${sheetRows}</Table></Worksheet></Workbook>`;
+  const blob = new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'snagline-apartment-details.xls';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('Exported to Excel');
+}
+
 function openInspection() {
   persist(false);
   window.location.href = 'inspection.html';
@@ -417,6 +478,7 @@ $('#documentInput').addEventListener('change', async (event) => {
   }
 });
 $('#addUnit').addEventListener('click', addUnit);
+$('#exportApartments').addEventListener('click', exportApartments);
 $('#backToApartments').addEventListener('click', () => {
   if (profileEditing) {
     if (!$('#quotedAmount').reportValidity() || !$('#calculatedArea').reportValidity()) return;

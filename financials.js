@@ -7,24 +7,6 @@ function amountInCents(value) {
   return Number.isFinite(amount) ? Math.round((amount + Number.EPSILON) * 100) : null;
 }
 
-function unitSizeTotal(apartments) {
-  const sizes = apartments
-    .map((apartment) => String(apartment.record?.unitSpace || '').trim())
-    .filter(Boolean);
-  if (!sizes.length) return '-';
-
-  const parsed = sizes.map((size) => {
-    const match = size.match(/^\s*([\d,]+(?:\.\d+)?)\s*(.*?)\s*$/);
-    return match ? { value: Number(match[1].replace(/,/g, '')), unit: match[2].toLowerCase() } : null;
-  });
-  if (parsed.some((size) => !size || !Number.isFinite(size.value))) return '-';
-  const units = new Set(parsed.map((size) => size.unit));
-  if (units.size !== 1) return '-';
-
-  const total = parsed.reduce((sum, size) => sum + size.value, 0);
-  return `${new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 }).format(total)}${parsed[0].unit ? ` ${parsed[0].unit}` : ''}`;
-}
-
 function xmlEscape(value) {
   return String(value ?? '')
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
@@ -73,7 +55,7 @@ function exportFinancials() {
   financialRows.push([
     { value: 'Totals' },
     { value: `${paidApartments.length} paid` },
-    { value: unitSizeTotal(paidApartments) },
+    { value: '' },
     ...totals.map((cents) => ({ value: cents / 100, numeric: true }))
   ]);
 
@@ -120,7 +102,7 @@ function exportFinancials() {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   const toast = document.querySelector('#toast');
-  toast.textContent = 'Finances and unit details exported';
+  toast.textContent = 'Exported to Excel';
   toast.classList.add('show');
   clearTimeout(exportFinancials.toastTimer);
   exportFinancials.toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
@@ -164,7 +146,6 @@ function renderFinancials() {
   }
   document.querySelector('#financialRows').replaceChildren(...rows);
   document.querySelector('#unitCountTotal').textContent = `${apartments.length} paid`;
-  document.querySelector('#unitSizeTotal').textContent = unitSizeTotal(apartments);
   ['invoicedTotal', 'qbelTotal', 'firstBridgeTotal'].forEach((id, index) => {
     document.querySelector(`#${id}`).textContent = amountFormat.format(totals[index] / 100);
   });
