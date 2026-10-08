@@ -40,10 +40,15 @@
     .upcoming-actions .inspect{background:var(--schedule-green);color:#fff;min-height:40px;font-size:11px;padding:8px 12px}
     .upcoming-item[data-payment-status='Paid']{border-left-color:#176735}
     .upcoming-item[data-payment-status='Payment Pending']{border-left-color:#b9791c}
-    .payment-label,.schedule-form output{font-weight:700}
-    .payment-label.is-paid,.schedule-form output.is-paid{color:#176735}
-    .payment-label.is-pending,.schedule-form output.is-pending{color:#a34b00}
+    .payment-label,.inspection-label,.schedule-form output{font-weight:700}
+    .payment-label.is-paid,.inspection-label.is-paid,.schedule-form output.is-paid{color:#176735}
+    .payment-label.is-pending,.inspection-label.is-pending,.schedule-form output.is-pending{color:#a34b00}
+    .inspection-label.is-to-be-scheduled,.schedule-form output.is-to-be-scheduled{color:#684515;background:#fff0d4;border-color:#b9791c}
+    .inspection-label.is-confirmed,.schedule-form output.is-confirmed{color:#163d24;background:#e6f1e8;border-color:#163d24}
+    .inspection-label.is-cancelled,.schedule-form output.is-cancelled{color:#7d2631;background:#f7dfe1;border-color:#ad3d4e}
+    .inspection-label.is-completed,.schedule-form output.is-completed{color:#176735;background:#e6f1e8;border-color:#176735}
     .schedule-form output{display:block;box-sizing:border-box;min-height:42px;padding:10px;background:#fff;border:1px solid #b9c9be;border-radius:5px;font:600 14px 'DM Sans',sans-serif}
+    .inspection-label{display:inline-flex;align-items:center;justify-content:center;padding:3px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap;line-height:1.5;font-size:10px}
     .upcoming-empty{color:var(--schedule-muted);padding:12px 0}
     .schedule-shell{grid-template-columns:minmax(260px,300px) minmax(0,1fr);gap:28px;margin-top:4px;align-items:start}
     .schedule-panel,.calendar-panel{background:transparent;border:0;border-radius:0;padding:18px 0;min-width:0}
@@ -108,6 +113,7 @@
             <label>Date<input id="slotDate" type="date" required></label>
             <label>Time<input id="slotTime" type="time" required></label>
             <label>Payment status<output id="slotPaymentStatus" aria-live="polite"></output></label>
+            <label>Inspection status<output id="slotInspectionStatus" aria-live="polite"></output></label>
             <label>Notes<textarea id="slotNotes" placeholder="Access details, inspector notes, reminders..."></textarea></label>
             <div class="form-actions"><button class="button button-dark" id="saveSlot" type="submit">Book slot</button><button class="button button-outline" id="clearSlot" type="button">Clear</button><button class="button danger" id="deleteSlot" type="button">Delete</button></div>
           </form>

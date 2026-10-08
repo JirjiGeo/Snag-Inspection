@@ -33,9 +33,19 @@ function unitPaymentStatus(id) {
   return apartments.find((unit) => unit.id === id)?.record?.paymentStatus === 'Paid' ? 'Paid' : 'Payment Pending';
 }
 
+function unitInspectionStatus(id) {
+  return apartments.find((unit) => unit.id === id)?.record?.inspectionStatus || 'To be scheduled';
+}
+
 function paymentLabel(id) {
   const status = unitPaymentStatus(id);
   return `<span class="payment-label ${status === 'Paid' ? 'is-paid' : 'is-pending'}">${status}</span>`;
+}
+
+function inspectionLabel(id) {
+  const status = unitInspectionStatus(id);
+  const cssClass = status.toLowerCase().replace(/\s+/g, '-');
+  return `<span class="inspection-label is-${cssClass}">${status}</span>`;
 }
 
 function renderPaymentStatusField() {
@@ -44,6 +54,14 @@ function renderPaymentStatusField() {
   field.value = status;
   field.classList.toggle('is-paid', status === 'Paid');
   field.classList.toggle('is-pending', status !== 'Paid');
+}
+
+function renderInspectionStatusField() {
+  const status = unitInspectionStatus($('#slotUnit').value);
+  const field = $('#slotInspectionStatus');
+  field.value = status;
+  ['is-to-be-scheduled', 'is-confirmed', 'is-cancelled', 'is-completed'].forEach((className) => field.classList.remove(className));
+  field.classList.add(`is-${status.toLowerCase().replace(/\s+/g, '-')}`);
 }
 
 function renderUnits() {
@@ -66,7 +84,7 @@ function renderBanner() {
   const today = formatDate(new Date());
   const todaySlots = slots.filter((slot) => slot.date === today).sort((a, b) => a.time.localeCompare(b.time));
   $('#todayBanner').innerHTML = todaySlots.length
-    ? `<strong>${todaySlots.length} inspection${todaySlots.length === 1 ? '' : 's'} to be inspected today</strong><p>${todaySlots.map((slot) => `${unitName(slot.unitId)} at ${slot.time || 'Time not set'} (${paymentLabel(slot.unitId)})`).join(' · ')}</p>`
+    ? `<strong>${todaySlots.length} inspection${todaySlots.length === 1 ? '' : 's'} to be inspected today</strong><p>${todaySlots.map((slot) => `${unitName(slot.unitId)} at ${slot.time || 'Time not set'} (${paymentLabel(slot.unitId)} · ${inspectionLabel(slot.unitId)})`).join(' · ')}</p>`
     : '<strong>Today’s inspections</strong><p>No units scheduled for inspection today.</p>';
 }
 
@@ -76,7 +94,7 @@ function renderUpcoming() {
     .filter((slot) => new Date(`${slot.date}T${slot.time || '00:00'}`) >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
     .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
   $('#upcomingList').innerHTML = upcoming.length
-    ? upcoming.map((slot) => `<div class="upcoming-item" data-payment-status="${unitPaymentStatus(slot.unitId)}"><button class="slot-summary" data-slot-id="${slot.id}"><strong>${unitName(slot.unitId)}</strong><span class="slot-meta">${slot.date} · ${slot.time || 'Time not set'} · ${paymentLabel(slot.unitId)}${slot.notes ? ` · ${slot.notes}` : ''}</span></button><div class="upcoming-actions"><button class="inspect" data-open-inspection="${slot.unitId}">Open inspection</button></div></div>`).join('')
+    ? upcoming.map((slot) => `<div class="upcoming-item" data-payment-status="${unitPaymentStatus(slot.unitId)}"><button class="slot-summary" data-slot-id="${slot.id}"><strong>${unitName(slot.unitId)}</strong><span class="slot-meta">${slot.date} · ${slot.time || 'Time not set'} · ${paymentLabel(slot.unitId)} · ${inspectionLabel(slot.unitId)}${slot.notes ? ` · ${slot.notes}` : ''}</span></button><div class="upcoming-actions"><button class="inspect" data-open-inspection="${slot.unitId}">Open inspection</button></div></div>`).join('')
     : '<p class="upcoming-empty">No upcoming inspections booked.</p>';
   document.querySelectorAll('.slot-summary').forEach((item) => item.addEventListener('click', () => editSlot(item.dataset.slotId)));
   document.querySelectorAll('[data-open-inspection]').forEach((button) => button.addEventListener('click', () => openInspection(button.dataset.openInspection)));
@@ -104,7 +122,7 @@ function renderCalendar() {
     const daySlots = slots.filter((slot) => slot.date === key);
     const isToday = key === formatDate(new Date());
     const outside = date.getMonth() !== month;
-    cells.push(`<div class="day-cell ${outside ? 'outside' : ''} ${isToday ? 'today' : ''}"><div class="day-number">${date.getDate()}</div>${daySlots.map((slot) => `<button class="slot ${unitPaymentStatus(slot.unitId) === 'Paid' ? 'paid' : 'pending'}" data-slot-id="${slot.id}">${unitName(slot.unitId)}<span class="time">${slot.time || 'Time not set'}</span>${paymentLabel(slot.unitId)}</button>`).join('')}</div>`);
+    cells.push(`<div class="day-cell ${outside ? 'outside' : ''} ${isToday ? 'today' : ''}"><div class="day-number">${date.getDate()}</div>${daySlots.map((slot) => `<button class="slot ${unitPaymentStatus(slot.unitId) === 'Paid' ? 'paid' : 'pending'}" data-slot-id="${slot.id}">${unitName(slot.unitId)}<span class="time">${slot.time || 'Time not set'}</span>${paymentLabel(slot.unitId)}${inspectionLabel(slot.unitId)}</button>`).join('')}</div>`);
   }
   $('#calendarGrid').innerHTML = cells.join('');
   document.querySelectorAll('[data-slot-id]').forEach((button) => button.addEventListener('click', () => editSlot(button.dataset.slotId)));
@@ -117,6 +135,7 @@ function clearForm() {
   $('#slotTime').value = '09:00';
   $('#saveSlot').textContent = 'Book slot';
   renderPaymentStatusField();
+  renderInspectionStatusField();
 }
 
 function editSlot(id) {
@@ -127,6 +146,7 @@ function editSlot(id) {
   $('#slotDate').value = slot.date;
   $('#slotTime').value = slot.time;
   renderPaymentStatusField();
+  renderInspectionStatusField();
   $('#slotNotes').value = slot.notes || '';
   $('#saveSlot').textContent = 'Save changes';
   showToast('Slot opened for editing');
@@ -169,7 +189,10 @@ $('#slotForm').addEventListener('submit', (event) => {
   event.preventDefault();
   saveSlot();
 });
-$('#slotUnit').addEventListener('change', renderPaymentStatusField);
+$('#slotUnit').addEventListener('change', () => {
+  renderPaymentStatusField();
+  renderInspectionStatusField();
+});
 $('#clearSlot').addEventListener('click', clearForm);
 $('#deleteSlot').addEventListener('click', deleteSlot);
 $('#prevMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() - 1); renderCalendar(); });
