@@ -78,6 +78,7 @@ button {
     flex: 0 0 auto;
     min-height: 42px;
     padding: 10px;
+    font-size: 12px;
     white-space: nowrap;
   }
 
@@ -115,7 +116,20 @@ button {
   .topbar {
     gap: 12px;
     align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 20px;
+  }
+
+  .top-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .top-actions .button {
+    flex: 0 1 auto;
+    width: auto;
+    padding: 10px 12px;
+    font-size: 12px;
   }
 
   .topbar h1 {
