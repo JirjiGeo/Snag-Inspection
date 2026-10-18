@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snagline | Operations</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="responsive.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span>QBEL</span></div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="dashboard.html"><span class="nav-icon" aria-hidden="true">▦</span> Dashboard</a>
+        <a class="nav-item" href="apartments.html"><span class="nav-icon" aria-hidden="true">⌂</span> Apartments</a>
+        <a class="nav-item" href="activity.html"><span class="nav-icon" aria-hidden="true">◷</span> Schedules</a>
+        <a class="nav-item" href="inspection.html"><span class="nav-icon" aria-hidden="true">▤</span> Inspections</a>
+        <a class="nav-item" href="reports.html"><span class="nav-icon" aria-hidden="true">□</span> Reports</a>
+        <a class="nav-item" href="financials.html"><span class="nav-icon" aria-hidden="true">$</span> Financials</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="cloud-controls"><span id="cloudStatus">Cloud: checking...</span><button id="cloudAuthButton" type="button">Cloud login</button></div>
+        <div class="sync-status"><span class="sync-dot"></span><span><strong>Local workspace</strong><small>Changes saved automatically</small></span></div>
+        <button class="user-card" type="button"><span class="avatar">GM</span><span><strong>Georges Mansour</strong><small>Site inspector</small></span><span class="more">•••</span></button>
+      </div>
+    </aside>
+    <main class="main-content dashboard-main">
+      <header class="topbar dashboard-topbar">
+        <div><p class="eyebrow" id="dashboardDate"></p><h1>Operations</h1></div>
+        <div class="dashboard-actions"><a class="button button-outline" href="activity.html">Book inspection</a><a class="button button-dark" href="apartments.html">Add unit</a></div>
+      </header>
+      <section class="dashboard-metrics" id="dashboardMetrics" aria-label="Operations summary"></section>
+      <div class="dashboard-columns">
+        <section class="dashboard-section" aria-labelledby="attentionHeading">
+          <div class="dashboard-section-heading"><h2 id="attentionHeading">Needs attention</h2><span id="attentionCount"></span></div>
+          <div class="dashboard-list" id="attentionList"></div>
+        </section>
+        <section class="dashboard-section" aria-labelledby="upcomingHeading">
+          <div class="dashboard-section-heading"><h2 id="upcomingHeading">Coming up</h2><a href="activity.html">All schedule</a></div>
+          <div class="dashboard-list" id="upcomingList"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="cloud-config.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
