@@ -310,7 +310,7 @@ async function exportWordReport(unit, unitFindingsList, meta, reportSections) {
     .severity-high { border-left-color: #e58c69; }
     .severity-critical { border-left-color: #c95757; }
     .photo-container { margin: 15px 0; }
-    .photo-container img { max-width: 100%; height: auto; border: 1px solid #999; margin: 10px 0; }
+    .photo-container img { width: 2cm; height: 2cm; object-fit: contain; border: 1px solid #999; margin: 10px 0; }
     .photo-label { margin: 10px 0 5px 0; font-weight: bold; font-size: 12px; }
   </style>
 </head>
@@ -398,7 +398,7 @@ ${finding.note ? `<tr><th>Note</th><td>${finding.note}</td></tr>` : ''}
               const imgData = attachment.data && attachment.data.startsWith('data:') ? attachment.data : `data:${attachment.type || 'image/jpeg'};base64,${attachment.data}`;
               htmlContent += `<div class="photo-container">
 <p class="photo-label">Photo ${imgIndex + 1}: ${attachment.name}</p>
-<img src="${imgData}" style="max-width: 600px; height: auto; border: 1px solid #ccc;">
+<img src="${imgData}" style="width: 2cm; height: 2cm; object-fit: contain; border: 1px solid #ccc;">
 </div>`;
             });
           }
