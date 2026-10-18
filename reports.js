@@ -393,14 +393,19 @@ ${finding.note ? `<tr><th>Note</th><td>${finding.note}</td></tr>` : ''}
           // Add images with proper handling
           if (finding.attachments && finding.attachments.length > 0) {
             htmlContent += `<p style="margin-top: 15px; font-weight: bold;">Attached Photos:</p>`;
-            finding.attachments.forEach((attachment, imgIndex) => {
-              // Ensure data is in the correct format
-              const imgData = attachment.data && attachment.data.startsWith('data:') ? attachment.data : `data:${attachment.type || 'image/jpeg'};base64,${attachment.data}`;
-              htmlContent += `<div class="photo-container">
-<p class="photo-label">Photo ${imgIndex + 1}: ${attachment.name}</p>
+            const photoRows = [];
+            for (let photoIndex = 0; photoIndex < finding.attachments.length; photoIndex += 3) {
+              const photoCells = finding.attachments.slice(photoIndex, photoIndex + 3).map((attachment, cellIndex) => {
+                const imgIndex = photoIndex + cellIndex;
+                const imgData = attachment.data && attachment.data.startsWith('data:') ? attachment.data : `data:${attachment.type || 'image/jpeg'};base64,${attachment.data}`;
+                return `<td width="33%" style="width: 33%; border: 1px solid #a52121; padding: 8px; text-align: center; vertical-align: middle;">
+<p class="photo-label" style="margin: 0 0 6px; font-size: 10px;">Photo ${imgIndex + 1}: ${attachment.name || ''}</p>
 <img src="${imgData}" width="76" height="76" style="width: 76px; height: 76px; object-fit: contain; border: 1px solid #ccc;">
-</div>`;
-            });
+</td>`;
+              }).join('');
+              photoRows.push(`<tr>${photoCells}</tr>`);
+            }
+            htmlContent += `<table width="100%" border="1" bordercolor="#a52121" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin: 10px 0;">${photoRows.join('')}</table>`;
           }
 
           htmlContent += `</div>`;
