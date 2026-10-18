@@ -62,7 +62,11 @@ function confirmedBooking(unit) {
     .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`))[0] || null;
 }
 
-const unscheduledUnits = apartments.filter((unit) => isActiveUnit(unit) && !confirmedBooking(unit));
+const remainingInspectionUnits = apartments.filter(isActiveUnit);
+const scheduledUnits = remainingInspectionUnits.filter(confirmedBooking);
+const unscheduledUnits = remainingInspectionUnits.filter((unit) => !confirmedBooking(unit));
+const paidUnits = remainingInspectionUnits.filter((unit) => unit.record?.paymentStatus === 'Paid');
+const pendingPayments = remainingInspectionUnits.filter((unit) => unit.record?.paymentStatus !== 'Paid');
 const activeSlots = slots.filter((slot) => {
   const status = String(apartments.find((unit) => unit.id === slot.unitId)?.record?.inspectionStatus || '').toLowerCase();
   return status !== 'completed' && status !== 'cancelled';
@@ -70,21 +74,31 @@ const activeSlots = slots.filter((slot) => {
 const todaySlots = activeSlots.filter((slot) => slot.date === today);
 const weekSlots = activeSlots.filter((slot) => slot.date >= today && slot.date <= weekEnd)
   .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`));
-const pendingPayments = apartments.filter((unit) => unit.record?.unitStatus !== 'Cancelled' && unit.record?.paymentStatus !== 'Paid');
 const completedInspections = apartments.filter((unit) => String(unit.record?.inspectionStatus || '').toLowerCase() === 'completed').length;
 
 function renderMetrics() {
-  const metrics = [
+  const totals = [
     { label: 'Total units', value: apartments.length, detail: 'All registered units', href: 'apartments.html' },
     { label: 'Inspections completed', value: completedInspections, detail: `Of ${apartments.length} units`, href: 'reports.html' },
-    { label: 'Inspections today', value: todaySlots.length, detail: 'Scheduled for today', href: 'activity.html' },
-    { label: 'Next 7 days', value: weekSlots.length, detail: 'Upcoming appointments', href: 'activity.html' },
-    { label: 'Unscheduled units', value: unscheduledUnits.length, detail: 'No confirmed booking', view: 'unscheduled' },
-    { label: 'Payments pending', value: pendingPayments.length, detail: 'Units awaiting payment', view: 'payments' }
+    { label: 'Inspections remaining', value: remainingInspectionUnits.length, detail: 'Active units not completed', href: 'activity.html' }
   ];
-  document.querySelector('#dashboardMetrics').innerHTML = metrics.map((metric) => metric.view
-    ? `<button class="dashboard-metric" type="button" data-dashboard-view="${metric.view}" aria-controls="dashboardDetails" aria-expanded="false"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></button>`
-    : `<a class="dashboard-metric" href="${metric.href}"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></a>`).join('');
+  const schedule = [
+    { label: 'Inspections today', value: todaySlots.length, detail: 'Scheduled for today', href: 'activity.html' },
+    { label: 'Next 7 days', value: weekSlots.length, detail: 'Upcoming appointments', href: 'activity.html' }
+  ];
+  const breakdown = [
+    { label: 'Scheduled', value: scheduledUnits.length, detail: 'Confirmed future booking', href: 'activity.html' },
+    { label: 'Unscheduled', value: unscheduledUnits.length, detail: 'No confirmed future booking', view: 'unscheduled' },
+    { label: 'Paid', value: paidUnits.length, detail: 'Of remaining units', href: 'financials.html' },
+    { label: 'Payments pending', value: pendingPayments.length, detail: 'Of remaining units', view: 'payments' }
+  ];
+  const metricMarkup = (metric, className) => metric.view
+    ? `<button class="${className}" type="button" data-dashboard-view="${metric.view}" aria-controls="dashboardDetails" aria-expanded="false"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></button>`
+    : `<a class="${className}" href="${metric.href}"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></a>`;
+  document.querySelector('#dashboardMetrics').innerHTML = totals.map((metric) => metricMarkup(metric, 'dashboard-metric')).join('');
+  document.querySelector('#remainingUnitCount').textContent = `${remainingInspectionUnits.length} active unit${remainingInspectionUnits.length === 1 ? '' : 's'}`;
+  document.querySelector('#remainingMetrics').innerHTML = breakdown.map((metric) => metricMarkup(metric, 'remaining-metric')).join('');
+  document.querySelector('#scheduleMetrics').innerHTML = schedule.map((metric) => metricMarkup(metric, 'dashboard-metric')).join('');
 }
 
 function displayValue(value) {
@@ -222,7 +236,7 @@ function renderUpcoming() {
 }
 
 document.querySelector('#dashboardDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-document.querySelector('#dashboardMetrics').addEventListener('click', (event) => {
+document.querySelector('#dashboardSummary').addEventListener('click', (event) => {
   const button = event.target.closest('[data-dashboard-view]');
   if (!button) return;
   if (button.getAttribute('aria-expanded') === 'true') closeUnitDetails();

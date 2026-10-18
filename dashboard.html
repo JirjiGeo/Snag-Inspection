@@ -31,7 +31,14 @@
         <div><p class="eyebrow" id="dashboardDate"></p><h1>Operations</h1></div>
         <div class="dashboard-actions"><a class="button button-outline" href="activity.html">Book inspection</a><a class="button button-dark" href="apartments.html">Add unit</a></div>
       </header>
-      <section class="dashboard-metrics" id="dashboardMetrics" aria-label="Operations summary"></section>
+      <div class="dashboard-summary" id="dashboardSummary">
+        <section class="dashboard-metrics" id="dashboardMetrics" aria-label="Unit inspection totals"></section>
+        <section class="remaining-breakdown" aria-labelledby="remainingHeading">
+          <div class="remaining-breakdown-heading"><h2 id="remainingHeading">Remaining units breakdown</h2><span id="remainingUnitCount"></span></div>
+          <div class="remaining-metrics" id="remainingMetrics" aria-label="Scheduled, unscheduled, paid, and pending units"></div>
+        </section>
+        <section class="dashboard-metrics schedule-metrics" id="scheduleMetrics" aria-label="Schedule summary"></section>
+      </div>
       <section class="dashboard-details" id="dashboardDetails" aria-labelledby="dashboardDetailsHeading" hidden>
         <div class="dashboard-section-heading"><div><h2 id="dashboardDetailsHeading"></h2><span id="dashboardDetailsCount"></span></div><div class="dashboard-detail-actions"><button class="button button-outline" id="exportDashboardDetails" type="button">Export to Excel</button><button class="dashboard-detail-close" id="closeDashboardDetails" type="button" aria-label="Close unit details">×</button></div></div>
         <div class="dashboard-detail-list" id="dashboardDetailsList"></div>
