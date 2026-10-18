@@ -232,14 +232,16 @@ function renderAttention() {
     overdueUnitIds.add(slot.unitId);
     items.push({
       rank: 0,
-      html: `${scheduleLink()}<span class="dashboard-tag urgent">Overdue</span><span class="dashboard-row-title">${escapeHtml(unitName(slot.unitId))} inspection</span><span class="dashboard-row-meta">Was scheduled ${escapeHtml(slot.date)}${slot.time ? ` at ${escapeHtml(slot.time)}` : ''}</span></span><span class="dashboard-row-action">Review schedule</span></a>`
+      tone: 'overdue',
+      html: `<a class="attention-item is-overdue" href="activity.html"><span class="attention-marker" aria-hidden="true">!</span><span class="attention-copy"><span class="attention-label">Overdue inspection</span><strong>${escapeHtml(unitName(slot.unitId))}</strong><small>Was scheduled ${escapeHtml(slot.date)}${slot.time ? ` · ${escapeHtml(slot.time)}` : ''}</small></span><span class="attention-action">Review schedule <span aria-hidden="true">→</span></span></a>`
     });
   });
   openFindings.filter((finding) => ['high', 'critical'].includes(String(finding.severity).toLowerCase())).forEach((finding) => {
     const severity = String(finding.severity || 'High');
     items.push({
       rank: severity.toLowerCase() === 'critical' ? 1 : 2,
-      html: `${inspectionLink(finding.unit)}<span class="dashboard-tag ${severity.toLowerCase() === 'critical' ? 'urgent' : 'warning'}">${escapeHtml(severity)}</span><span class="dashboard-row-title">${escapeHtml(finding.text || 'Untitled finding')}</span><span class="dashboard-row-meta">${escapeHtml(finding.unit.name)} · ${escapeHtml(finding.status || 'Open')}</span></span><span class="dashboard-row-action">Open inspection</span></a>`
+      tone: severity.toLowerCase() === 'critical' ? 'critical' : 'high',
+      html: `<a class="attention-item is-${severity.toLowerCase() === 'critical' ? 'critical' : 'high'}" href="inspection.html" data-inspection-unit="${escapeHtml(finding.unit.id)}"><span class="attention-marker" aria-hidden="true">${severity.toLowerCase() === 'critical' ? '!!' : '!'}</span><span class="attention-copy"><span class="attention-label">${escapeHtml(severity)} finding</span><strong>${escapeHtml(finding.text || 'Untitled finding')}</strong><small>${escapeHtml(finding.unit.name)} · ${escapeHtml(finding.status || 'Open')}</small></span><span class="attention-action">Open inspection <span aria-hidden="true">→</span></span></a>`
     });
   });
   const scheduledUnitIds = new Set(weekSlots.map((slot) => slot.unitId));
@@ -249,22 +251,31 @@ function renderAttention() {
     && !scheduledUnitIds.has(unit.id)).forEach((unit) => {
     items.push({
       rank: 3,
-      html: `<a class="dashboard-row" href="activity.html"><span><span class="dashboard-tag warning">Schedule</span><span class="dashboard-row-title">${escapeHtml(unit.name)}</span><span class="dashboard-row-meta">Ready for inspection, no appointment in the next 7 days</span></span><span class="dashboard-row-action">Book slot</span></a>`
+      tone: 'schedule',
+      html: `<a class="attention-item is-schedule" href="activity.html"><span class="attention-marker" aria-hidden="true">+</span><span class="attention-copy"><span class="attention-label">Booking needed</span><strong>${escapeHtml(unit.name)}</strong><small>Ready for inspection · no confirmed appointment</small></span><span class="attention-action">Book slot <span aria-hidden="true">→</span></span></a>`
     });
   });
   items.sort((first, second) => first.rank - second.rank);
   const visible = items.slice(0, 8);
-  document.querySelector('#attentionCount').textContent = items.length ? `${items.length} item${items.length === 1 ? '' : 's'}` : '';
+  document.querySelector('#attentionCount').textContent = String(items.length).padStart(2, '0');
   document.querySelector('#attentionList').innerHTML = visible.length
     ? visible.map((item) => item.html).join('')
-    : '<p class="dashboard-empty">Nothing needs attention right now.</p>';
+    : '<div class="attention-empty"><span aria-hidden="true">✓</span><div><strong>All clear</strong><small>No overdue inspections or urgent actions.</small></div></div>';
 }
 
 function renderUpcoming() {
   const upcoming = weekSlots.slice(0, 7);
   document.querySelector('#upcomingList').innerHTML = upcoming.length
-    ? upcoming.map((slot) => `<a class="dashboard-row" href="activity.html"><span><span class="dashboard-row-title">${escapeHtml(unitName(slot.unitId))}</span><span class="dashboard-row-meta">${escapeHtml(slot.date)}${slot.time ? ` · ${escapeHtml(slot.time)}` : ''}${slot.priority && slot.priority !== 'Normal' ? ` · ${escapeHtml(slot.priority)} priority` : ''}</span></span><span class="dashboard-row-action">View schedule</span></a>`).join('')
-    : '<p class="dashboard-empty">No inspections scheduled in the next 7 days.</p>';
+    ? upcoming.map((slot) => {
+      const date = new Date(`${slot.date}T00:00:00`);
+      const day = date.toLocaleDateString('en-US', { day: '2-digit' });
+      const weekday = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+      const unit = apartments.find((item) => item.id === slot.unitId);
+      const building = unit?.record?.buildingName;
+      const priority = slot.priority && slot.priority !== 'Normal' ? `${escapeHtml(slot.priority)} priority` : 'Inspection';
+      return `<a class="agenda-item ${slot.priority && slot.priority !== 'Normal' ? 'is-priority' : ''}" href="activity.html"><span class="agenda-date"><strong>${day}</strong><small>${weekday}</small></span><span class="agenda-time">${escapeHtml(slot.time || '—')}</span><span class="agenda-copy"><strong>${escapeHtml(unitName(slot.unitId))}</strong><small>${escapeHtml(building || priority)}</small></span><span class="agenda-arrow" aria-hidden="true">↗</span></a>`;
+    }).join('')
+    : '<div class="agenda-empty"><span class="agenda-empty-mark" aria-hidden="true">—</span><div><strong>No bookings ahead</strong><small>Your next 7 days are clear.</small></div><a href="activity.html">Open schedule</a></div>';
 }
 
 document.querySelector('#dashboardDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
