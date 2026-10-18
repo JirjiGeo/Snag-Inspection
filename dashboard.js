@@ -56,10 +56,13 @@ function isActiveUnit(unit) {
   return !['cancelled', 'completed'].includes(unitStatus) && inspectionStatus !== 'completed';
 }
 
-function confirmedBooking(unit) {
-  if (String(unit.record?.inspectionStatus || '').toLowerCase() !== 'confirmed') return null;
+function nextBooking(unit) {
   return slots.filter((slot) => slot.unitId === unit.id && slot.date >= today)
     .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`))[0] || null;
+}
+
+function confirmedBooking(unit) {
+  return String(unit.record?.inspectionStatus || '').toLowerCase() === 'confirmed' ? nextBooking(unit) : null;
 }
 
 const remainingInspectionUnits = apartments.filter(isActiveUnit);
@@ -74,27 +77,43 @@ const activeSlots = slots.filter((slot) => {
 const todaySlots = activeSlots.filter((slot) => slot.date === today);
 const weekSlots = activeSlots.filter((slot) => slot.date >= today && slot.date <= weekEnd)
   .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`));
-const completedInspections = apartments.filter((unit) => String(unit.record?.inspectionStatus || '').toLowerCase() === 'completed').length;
+const completedUnits = apartments.filter((unit) => String(unit.record?.inspectionStatus || '').toLowerCase() === 'completed');
+
+function dashboardEntries(view) {
+  const units = (list) => list.map((unit) => ({ unit, slot: nextBooking(unit) }));
+  const appointments = (list) => list.map((slot) => ({ unit: apartments.find((unit) => unit.id === slot.unitId), slot })).filter((item) => item.unit);
+  if (view === 'all') return units(apartments);
+  if (view === 'completed') return units(completedUnits);
+  if (view === 'remaining') return units(remainingInspectionUnits);
+  if (view === 'scheduled') return scheduledUnits.map((unit) => ({ unit, slot: confirmedBooking(unit) }));
+  if (view === 'unscheduled') return units(unscheduledUnits);
+  if (view === 'paid') return units(paidUnits);
+  if (view === 'payments') return units(pendingPayments);
+  if (view === 'today') return appointments(todaySlots);
+  if (view === 'week') return appointments(weekSlots);
+  return [];
+}
 
 function renderMetrics() {
   const totals = [
-    { label: 'Total units', value: apartments.length, detail: 'All registered units', href: 'apartments.html' },
-    { label: 'Inspections completed', value: completedInspections, detail: `Of ${apartments.length} units`, href: 'reports.html' },
-    { label: 'Inspections remaining', value: remainingInspectionUnits.length, detail: 'Active units not completed', href: 'activity.html' }
+    { label: 'Total units', value: apartments.length, detail: 'All registered units', view: 'all', tone: 'total' },
+    { label: 'Inspections completed', value: completedUnits.length, detail: `Of ${apartments.length} units`, view: 'completed', tone: 'completed' },
+    { label: 'Inspections remaining', value: remainingInspectionUnits.length, detail: 'Active units not completed', view: 'remaining', tone: 'remaining' }
   ];
   const schedule = [
-    { label: 'Inspections today', value: todaySlots.length, detail: 'Scheduled for today', href: 'activity.html' },
-    { label: 'Next 7 days', value: weekSlots.length, detail: 'Upcoming appointments', href: 'activity.html' }
+    { label: 'Inspections today', value: todaySlots.length, detail: 'Scheduled for today', view: 'today', tone: 'schedule' },
+    { label: 'Next 7 days', value: weekSlots.length, detail: 'Upcoming appointments', view: 'week', tone: 'schedule' }
   ];
   const breakdown = [
-    { label: 'Scheduled', value: scheduledUnits.length, detail: 'Confirmed future booking', href: 'activity.html' },
-    { label: 'Unscheduled', value: unscheduledUnits.length, detail: 'No confirmed future booking', view: 'unscheduled' },
-    { label: 'Paid', value: paidUnits.length, detail: 'Of remaining units', href: 'financials.html' },
-    { label: 'Payments pending', value: pendingPayments.length, detail: 'Of remaining units', view: 'payments' }
+    { label: 'Scheduled', value: scheduledUnits.length, detail: 'Confirmed future booking', view: 'scheduled', tone: 'scheduled' },
+    { label: 'Unscheduled', value: unscheduledUnits.length, detail: 'No confirmed future booking', view: 'unscheduled', tone: 'unscheduled' },
+    { label: 'Paid', value: paidUnits.length, detail: 'Of active units', view: 'paid', tone: 'paid' },
+    { label: 'Payments pending', value: pendingPayments.length, detail: 'Of active units', view: 'payments', tone: 'pending' }
   ];
-  const metricMarkup = (metric, className) => metric.view
-    ? `<button class="${className}" type="button" data-dashboard-view="${metric.view}" aria-controls="dashboardDetails" aria-expanded="false"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></button>`
-    : `<a class="${className}" href="${metric.href}"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></a>`;
+  const metricMarkup = (metric, className) => {
+    const classes = `${className}${metric.tone ? ` is-${metric.tone}` : ''}`;
+    return `<button class="${classes}" type="button" data-dashboard-view="${metric.view}" aria-controls="dashboardDetails" aria-expanded="false"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></button>`;
+  };
   document.querySelector('#dashboardMetrics').innerHTML = totals.map((metric) => metricMarkup(metric, 'dashboard-metric')).join('');
   document.querySelector('#remainingUnitCount').textContent = `${remainingInspectionUnits.length} active unit${remainingInspectionUnits.length === 1 ? '' : 's'}`;
   document.querySelector('#remainingMetrics').innerHTML = breakdown.map((metric) => metricMarkup(metric, 'remaining-metric')).join('');
@@ -109,23 +128,44 @@ function renderUnitDetails(view) {
   const heading = document.querySelector('#dashboardDetailsHeading');
   const count = document.querySelector('#dashboardDetailsCount');
   const list = document.querySelector('#dashboardDetailsList');
-  const details = view === 'payments' ? pendingPayments : unscheduledUnits;
-  heading.textContent = view === 'payments' ? 'Units with pending payments' : 'Units without a confirmed booking';
-  count.textContent = `${details.length} unit${details.length === 1 ? '' : 's'}`;
+  const titles = {
+    all: 'All units',
+    completed: 'Units with completed inspections',
+    remaining: 'Units with inspections remaining',
+    scheduled: 'Units with confirmed bookings',
+    unscheduled: 'Units without confirmed bookings',
+    paid: 'Paid units among active inspections',
+    payments: 'Units with pending payments',
+    today: "Today's inspections",
+    week: 'Inspections in the next 7 days'
+  };
+  const entries = dashboardEntries(view);
+  const paymentView = view === 'payments' || view === 'paid';
+  const appointmentView = ['scheduled', 'today', 'week'].includes(view);
+  heading.textContent = titles[view] || 'Units';
+  count.textContent = `${entries.length} ${appointmentView ? 'inspection' : 'unit'}${entries.length === 1 ? '' : 's'}`;
   document.querySelector('#dashboardDetails').dataset.view = view;
-  list.innerHTML = details.length ? details.map((unit) => {
+  list.innerHTML = entries.length ? entries.map(({ unit, slot }) => {
     const record = unit.record || {};
-    if (view === 'payments') {
+    if (paymentView) {
       const invoice = record.invoicedAmount ? `Invoiced ${displayValue(record.invoicedAmount)}` : '';
       const quote = record.quotedAmount ? `Quoted ${displayValue(record.quotedAmount)}` : '';
       const amount = invoice || quote || 'Amount not set';
       const contact = [record.ownerPhone, record.ownerEmail].filter(Boolean).map(escapeHtml).join(' · ') || 'No contact details';
-      return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Owner</strong><span>${displayValue(record.ownerName)}</span></div><div><strong>Contact</strong><span>${contact}</span></div><div><strong>${invoice ? 'Invoice' : 'Quote'}</strong><span>${amount.replace(/^(Invoiced|Quoted) /, '')}</span></div><a href="apartments.html" data-apartment-unit="${escapeHtml(unit.id)}">View unit</a></article>`;
+      return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Owner</strong><span>${displayValue(record.ownerName)}</span></div><div><strong>Contact</strong><span>${contact}</span></div><div><strong>${invoice ? 'Invoice' : 'Quote'}</strong><span>${amount.replace(/^(Invoiced|Quoted) /, '')} · ${escapeHtml(record.paymentStatus || 'Payment Pending')}</span></div><a href="apartments.html" data-apartment-unit="${escapeHtml(unit.id)}">View unit</a></article>`;
+    }
+    if (appointmentView) {
+      const appointment = slot ? `${escapeHtml(slot.date)}${slot.time ? ` · ${escapeHtml(slot.time)}` : ''}` : 'No future booking';
+      const priority = slot?.priority && slot.priority !== 'Normal' ? `${escapeHtml(slot.priority)} priority` : 'Normal priority';
+      return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Inspection slot</strong><span>${appointment}</span></div><div><strong>Inspection status</strong><span>${escapeHtml(record.inspectionStatus || 'To be scheduled')}</span></div><div><strong>Priority</strong><span>${priority}</span></div><a href="activity.html">Open schedule</a></article>`;
     }
     const status = record.inspectionStatus || 'To be scheduled';
     const stage = record.unitStatus || 'Quote For Approval';
-    return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Inspection status</strong><span>${escapeHtml(status)}</span></div><div><strong>Workflow stage</strong><span>${escapeHtml(stage)}</span></div><div><strong>Booking</strong><span>No future confirmed slot</span></div><a href="activity.html">Open schedule</a></article>`;
-  }).join('') : '<p class="dashboard-empty">No units in this list.</p>';
+    const booking = slot ? `${confirmedBooking(unit) ? 'Confirmed' : 'Unconfirmed'} · ${escapeHtml(slot.date)}${slot.time ? ` · ${escapeHtml(slot.time)}` : ''}` : 'No future booking';
+    const contextLabel = view === 'unscheduled' ? 'Booking' : 'Payment status';
+    const contextValue = view === 'unscheduled' ? booking : escapeHtml(record.paymentStatus || 'Payment Pending');
+    return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Inspection status</strong><span>${escapeHtml(status)}</span></div><div><strong>Workflow stage</strong><span>${escapeHtml(stage)}</span></div><div><strong>${contextLabel}</strong><span>${contextValue}</span></div><a href="apartments.html" data-apartment-unit="${escapeHtml(unit.id)}">View unit</a></article>`;
+  }).join('') : '<p class="dashboard-empty">No records match this dashboard category.</p>';
   document.querySelector('#dashboardDetails').hidden = false;
   document.querySelectorAll('[data-dashboard-view]').forEach((button) => {
     const expanded = button.dataset.dashboardView === view;
@@ -149,38 +189,30 @@ function escapeSpreadsheetXml(value) {
 }
 
 function exportDashboardUnits(view) {
-  const rows = view === 'payments'
-    ? [
-      ['Unit', 'Building', 'Owner', 'Phone', 'Email', 'Quoted Amount', 'Invoiced Amount', 'Payment Status', 'Payment Method'],
-      ...pendingPayments.map((unit) => {
-        const record = unit.record || {};
-        return [unit.name, record.buildingName, record.ownerName, record.ownerPhone, record.ownerEmail, record.quotedAmount, record.invoicedAmount, record.paymentStatus || 'Payment Pending', record.paymentMethod];
-      })
-    ]
-    : [
-      ['Unit', 'Building', 'Owner', 'Phone', 'Email', 'Unit Status', 'Inspection Status', 'Existing Slot Date', 'Existing Slot Time'],
-      ...unscheduledUnits.map((unit) => {
-        const record = unit.record || {};
-        const unitSlots = slots.filter((slot) => slot.unitId === unit.id && slot.date)
-          .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`));
-        const slot = unitSlots.find((item) => item.date >= today) || unitSlots[unitSlots.length - 1];
-        return [unit.name, record.buildingName, record.ownerName, record.ownerPhone, record.ownerEmail, record.unitStatus, record.inspectionStatus || 'To be scheduled', slot?.date, slot?.time];
-      })
-    ];
+  const entries = dashboardEntries(view);
+  const rows = [
+    ['Unit', 'Building', 'Owner', 'Phone', 'Email', 'Unit Status', 'Inspection Status', 'Payment Status', 'Payment Method', 'Quoted Amount', 'Invoiced Amount', 'Booking Date', 'Booking Time', 'Booking Priority'],
+    ...entries.map(({ unit, slot }) => {
+      const record = unit.record || {};
+      return [unit.name, record.buildingName, record.ownerName, record.ownerPhone, record.ownerEmail, record.unitStatus, record.inspectionStatus || 'To be scheduled', record.paymentStatus || 'Payment Pending', record.paymentMethod, record.quotedAmount, record.invoicedAmount, slot?.date, slot?.time, slot?.priority];
+    })
+  ];
   const sheetRows = rows.map((row) => `<Row>${row.map((value, index) => {
-    const amountColumn = view === 'payments' && (index === 5 || index === 6);
+    const amountColumn = index === 9 || index === 10;
     const numeric = amountColumn && value !== '' && value !== null && Number.isFinite(Number(value));
     return numeric
       ? `<Cell><Data ss:Type="Number">${Number(value)}</Data></Cell>`
       : `<Cell><Data ss:Type="String">${escapeSpreadsheetXml(value)}</Data></Cell>`;
   }).join('')}</Row>`).join('');
-  const sheetName = view === 'payments' ? 'Pending Payments' : 'Unscheduled Units';
+  const sheetNames = { all: 'All Units', completed: 'Completed Inspections', remaining: 'Remaining Inspections', scheduled: 'Scheduled Units', unscheduled: 'Unscheduled Units', paid: 'Paid Units', payments: 'Pending Payments', today: 'Inspections Today', week: 'Next 7 Days' };
+  const filenames = { all: 'all-units', completed: 'completed-inspections', remaining: 'remaining-inspections', scheduled: 'scheduled-units', unscheduled: 'unscheduled-units', paid: 'paid-units', payments: 'pending-payments', today: 'inspections-today', week: 'inspections-next-7-days' };
+  const sheetName = sheetNames[view] || 'Dashboard Units';
   const workbook = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="${sheetName}"><Table>${sheetRows}</Table></Worksheet></Workbook>`;
   const blob = new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = view === 'payments' ? 'snagline-pending-payments.xls' : 'snagline-unscheduled-units.xls';
+  link.download = `snagline-${filenames[view] || 'dashboard-units'}.xls`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
