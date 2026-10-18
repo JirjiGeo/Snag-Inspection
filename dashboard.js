@@ -50,6 +50,19 @@ function allFindings() {
 }
 
 const openFindings = allFindings().filter(isOpen);
+function isActiveUnit(unit) {
+  const unitStatus = String(unit.record?.unitStatus || '').toLowerCase();
+  const inspectionStatus = String(unit.record?.inspectionStatus || '').toLowerCase();
+  return !['cancelled', 'completed'].includes(unitStatus) && inspectionStatus !== 'completed';
+}
+
+function confirmedBooking(unit) {
+  if (String(unit.record?.inspectionStatus || '').toLowerCase() !== 'confirmed') return null;
+  return slots.filter((slot) => slot.unitId === unit.id && slot.date >= today)
+    .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`))[0] || null;
+}
+
+const unscheduledUnits = apartments.filter((unit) => isActiveUnit(unit) && !confirmedBooking(unit));
 const activeSlots = slots.filter((slot) => {
   const status = String(apartments.find((unit) => unit.id === slot.unitId)?.record?.inspectionStatus || '').toLowerCase();
   return status !== 'completed' && status !== 'cancelled';
@@ -63,10 +76,96 @@ function renderMetrics() {
   const metrics = [
     { label: 'Inspections today', value: todaySlots.length, detail: 'Scheduled for today', href: 'activity.html' },
     { label: 'Next 7 days', value: weekSlots.length, detail: 'Upcoming appointments', href: 'activity.html' },
-    { label: 'Open findings', value: openFindings.length, detail: 'Across all units', href: 'reports.html' },
-    { label: 'Payments pending', value: pendingPayments.length, detail: 'Units awaiting payment', href: 'financials.html' }
+    { label: 'Unscheduled units', value: unscheduledUnits.length, detail: 'No confirmed booking', view: 'unscheduled' },
+    { label: 'Payments pending', value: pendingPayments.length, detail: 'Units awaiting payment', view: 'payments' }
   ];
-  document.querySelector('#dashboardMetrics').innerHTML = metrics.map((metric) => `<a class="dashboard-metric" href="${metric.href}"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></a>`).join('');
+  document.querySelector('#dashboardMetrics').innerHTML = metrics.map((metric) => metric.view
+    ? `<button class="dashboard-metric" type="button" data-dashboard-view="${metric.view}" aria-controls="dashboardDetails" aria-expanded="false"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></button>`
+    : `<a class="dashboard-metric" href="${metric.href}"><span>${metric.label}</span><strong>${metric.value}</strong><small>${metric.detail}</small></a>`).join('');
+}
+
+function displayValue(value) {
+  return value ? escapeHtml(value) : 'Not provided';
+}
+
+function renderUnitDetails(view) {
+  const heading = document.querySelector('#dashboardDetailsHeading');
+  const count = document.querySelector('#dashboardDetailsCount');
+  const list = document.querySelector('#dashboardDetailsList');
+  const details = view === 'payments' ? pendingPayments : unscheduledUnits;
+  heading.textContent = view === 'payments' ? 'Units with pending payments' : 'Units without a confirmed booking';
+  count.textContent = `${details.length} unit${details.length === 1 ? '' : 's'}`;
+  document.querySelector('#dashboardDetails').dataset.view = view;
+  list.innerHTML = details.length ? details.map((unit) => {
+    const record = unit.record || {};
+    if (view === 'payments') {
+      const invoice = record.invoicedAmount ? `Invoiced ${displayValue(record.invoicedAmount)}` : '';
+      const quote = record.quotedAmount ? `Quoted ${displayValue(record.quotedAmount)}` : '';
+      const amount = invoice || quote || 'Amount not set';
+      const contact = [record.ownerPhone, record.ownerEmail].filter(Boolean).map(escapeHtml).join(' · ') || 'No contact details';
+      return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Owner</strong><span>${displayValue(record.ownerName)}</span></div><div><strong>Contact</strong><span>${contact}</span></div><div><strong>${invoice ? 'Invoice' : 'Quote'}</strong><span>${amount.replace(/^(Invoiced|Quoted) /, '')}</span></div><a href="apartments.html" data-apartment-unit="${escapeHtml(unit.id)}">View unit</a></article>`;
+    }
+    const status = record.inspectionStatus || 'To be scheduled';
+    const stage = record.unitStatus || 'Quote For Approval';
+    return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Inspection status</strong><span>${escapeHtml(status)}</span></div><div><strong>Workflow stage</strong><span>${escapeHtml(stage)}</span></div><div><strong>Booking</strong><span>No future confirmed slot</span></div><a href="activity.html">Open schedule</a></article>`;
+  }).join('') : '<p class="dashboard-empty">No units in this list.</p>';
+  document.querySelector('#dashboardDetails').hidden = false;
+  document.querySelectorAll('[data-dashboard-view]').forEach((button) => {
+    const expanded = button.dataset.dashboardView === view;
+    button.setAttribute('aria-expanded', String(expanded));
+  });
+}
+
+function closeUnitDetails() {
+  document.querySelector('#dashboardDetails').hidden = true;
+  document.querySelectorAll('[data-dashboard-view]').forEach((button) => button.setAttribute('aria-expanded', 'false'));
+}
+
+function escapeSpreadsheetXml(value) {
+  return String(value ?? '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function exportDashboardUnits(view) {
+  const rows = view === 'payments'
+    ? [
+      ['Unit', 'Building', 'Owner', 'Phone', 'Email', 'Quoted Amount', 'Invoiced Amount', 'Payment Status', 'Payment Method'],
+      ...pendingPayments.map((unit) => {
+        const record = unit.record || {};
+        return [unit.name, record.buildingName, record.ownerName, record.ownerPhone, record.ownerEmail, record.quotedAmount, record.invoicedAmount, record.paymentStatus || 'Payment Pending', record.paymentMethod];
+      })
+    ]
+    : [
+      ['Unit', 'Building', 'Owner', 'Phone', 'Email', 'Unit Status', 'Inspection Status', 'Existing Slot Date', 'Existing Slot Time'],
+      ...unscheduledUnits.map((unit) => {
+        const record = unit.record || {};
+        const unitSlots = slots.filter((slot) => slot.unitId === unit.id && slot.date)
+          .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`));
+        const slot = unitSlots.find((item) => item.date >= today) || unitSlots[unitSlots.length - 1];
+        return [unit.name, record.buildingName, record.ownerName, record.ownerPhone, record.ownerEmail, record.unitStatus, record.inspectionStatus || 'To be scheduled', slot?.date, slot?.time];
+      })
+    ];
+  const sheetRows = rows.map((row) => `<Row>${row.map((value, index) => {
+    const amountColumn = view === 'payments' && (index === 5 || index === 6);
+    const numeric = amountColumn && value !== '' && value !== null && Number.isFinite(Number(value));
+    return numeric
+      ? `<Cell><Data ss:Type="Number">${Number(value)}</Data></Cell>`
+      : `<Cell><Data ss:Type="String">${escapeSpreadsheetXml(value)}</Data></Cell>`;
+  }).join('')}</Row>`).join('');
+  const sheetName = view === 'payments' ? 'Pending Payments' : 'Unscheduled Units';
+  const workbook = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="${sheetName}"><Table>${sheetRows}</Table></Worksheet></Workbook>`;
+  const blob = new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = view === 'payments' ? 'snagline-pending-payments.xls' : 'snagline-unscheduled-units.xls';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function inspectionLink(unit) {
@@ -120,6 +219,22 @@ function renderUpcoming() {
 }
 
 document.querySelector('#dashboardDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+document.querySelector('#dashboardMetrics').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-dashboard-view]');
+  if (!button) return;
+  if (button.getAttribute('aria-expanded') === 'true') closeUnitDetails();
+  else renderUnitDetails(button.dataset.dashboardView);
+});
+document.querySelector('#closeDashboardDetails').addEventListener('click', closeUnitDetails);
+document.querySelector('#exportDashboardDetails').addEventListener('click', () => {
+  exportDashboardUnits(document.querySelector('#dashboardDetails').dataset.view);
+});
+document.querySelector('#dashboardDetailsList').addEventListener('click', (event) => {
+  const link = event.target.closest('[data-apartment-unit]');
+  if (!link) return;
+  apartmentStore.activeApartmentId = link.dataset.apartmentUnit;
+  localStorage.setItem(storage.apartments, JSON.stringify(apartmentStore));
+});
 document.querySelector('#attentionList').addEventListener('click', (event) => {
   const link = event.target.closest('[data-inspection-unit]');
   if (!link) return;
