@@ -71,9 +71,12 @@ const todaySlots = activeSlots.filter((slot) => slot.date === today);
 const weekSlots = activeSlots.filter((slot) => slot.date >= today && slot.date <= weekEnd)
   .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`));
 const pendingPayments = apartments.filter((unit) => unit.record?.unitStatus !== 'Cancelled' && unit.record?.paymentStatus !== 'Paid');
+const completedInspections = apartments.filter((unit) => String(unit.record?.inspectionStatus || '').toLowerCase() === 'completed').length;
 
 function renderMetrics() {
   const metrics = [
+    { label: 'Total units', value: apartments.length, detail: 'All registered units', href: 'apartments.html' },
+    { label: 'Inspections completed', value: completedInspections, detail: `Of ${apartments.length} units`, href: 'reports.html' },
     { label: 'Inspections today', value: todaySlots.length, detail: 'Scheduled for today', href: 'activity.html' },
     { label: 'Next 7 days', value: weekSlots.length, detail: 'Upcoming appointments', href: 'activity.html' },
     { label: 'Unscheduled units', value: unscheduledUnits.length, detail: 'No confirmed booking', view: 'unscheduled' },
