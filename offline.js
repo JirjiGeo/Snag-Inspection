@@ -2,7 +2,8 @@
   const status = document.querySelector('#offlineStatus');
   const updateStatus = () => {
     if (!status) return;
-    status.textContent = navigator.onLine ? 'Online · saves on this device' : 'Offline · saves on this device';
+    const connection = navigator.onLine ? 'Online · saves on this device' : 'Offline · saves on this device';
+    status.textContent = window.isSecureContext ? connection : `${connection} · HTTPS needed for camera`;
     status.classList.toggle('is-offline', !navigator.onLine);
   };
 

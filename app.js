@@ -42,8 +42,21 @@ function areasFor(inspection) {
   return layoutAreas[aliases[bedroomSelection] || bedroomSelection] || layoutAreas.studio;
 }
 function stateKey() { return `${activeInspection.id}-${areasFor(activeInspection)[activeAreaIndex]}`; }
-function persist() { localStorage.setItem(storageKey, JSON.stringify({ areaState, findings, inspectionMeta })); window.snagCloudSave?.(); showToast(); }
-function showToast() { const toast = $('#toast'); toast.classList.add('show'); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove('show'), 1800); }
+function persist() {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify({ areaState, findings, inspectionMeta }));
+  } catch (error) {
+    const message = error.name === 'QuotaExceededError'
+      ? 'Device storage is full. Remove some photos before saving this inspection.'
+      : `Could not save this inspection: ${error.message}`;
+    showToast(message);
+    return false;
+  }
+  window.snagCloudSave?.();
+  showToast('Saved on this device');
+  return true;
+}
+function showToast(message = 'Saved on this device') { const toast = $('#toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove('show'), 2800); }
 
 function migrateLegacyAreaKeys() {
   [findings, areaState].forEach((records) => {
@@ -95,12 +108,11 @@ function renderAreaDetail() {
   const key = stateKey();
   const currentFindings = findings[key] || [];
   $('#areaDetail').innerHTML = `<h3>${area}</h3><p>Add as many findings as needed for this area. Each finding can be tracked separately.</p>
-  <div class="manual-findings"><div class="finding-entry new-finding-card"><div class="entry-label">New finding</div><label>Description<input id="findingInput" type="text" placeholder="Describe a finding, defect, or action required"></label><label>Note<textarea id="findingNote" placeholder="Add a note for this finding"></textarea></label><div class="attachment-field"><span>Attachments</span><div class="attachment-controls"><button id="chooseFindingPhotos" type="button" class="button button-outline">Upload photos</button><button id="takeFindingPhoto" type="button" class="button button-outline">Take photo</button></div><input id="findingAttachments" type="file" accept="image/*" multiple hidden></div><div class="attachment-preview" id="attachmentPreview"></div><button id="addFinding" class="button button-dark">Add finding</button></div>${editingFindingIndex !== null && currentFindings[editingFindingIndex] ? findingEditor(currentFindings[editingFindingIndex]) : ''}<div class="findings-heading"><strong>Findings summary</strong><span>${currentFindings.length} added</span></div><div class="finding-list">${currentFindings.length ? currentFindings.map((finding, index) => `<div class="finding-card ${editingFindingIndex === index ? 'editing' : ''}" data-edit-finding="${index}"><div><strong>${finding.text}</strong>${finding.note ? `<p class="finding-note">${finding.note}</p>` : ''}<span class="finding-meta"><span>${finding.status || 'Open'}</span><span>${(finding.attachments || []).length} attachments</span></span></div><div class="finding-actions"><button data-view-finding="${index}">View</button><button data-edit-action="${index}">Edit</button><button class="remove-finding" data-remove-finding="${index}" aria-label="Remove finding">×</button></div></div>`).join('') : '<p class="empty-findings">No raised findings for this area.</p>'}</div></div>
+  <div class="manual-findings"><div class="finding-entry new-finding-card"><div class="entry-label">New finding</div><label>Description<input id="findingInput" type="text" placeholder="Describe a finding, defect, or action required"></label><label>Note<textarea id="findingNote" placeholder="Add a note for this finding"></textarea></label><div class="attachment-field"><span>Attachments</span><div class="attachment-controls"><label for="findingAttachments" class="button button-outline file-picker-button">Choose photos</label><label id="takeFindingPhoto" for="findingCameraInput" class="button button-outline file-picker-button">Take photo</label></div><input id="findingAttachments" type="file" accept="image/*" multiple hidden></div><div class="attachment-preview" id="attachmentPreview"></div><button id="addFinding" class="button button-dark">Add finding</button></div>${editingFindingIndex !== null && currentFindings[editingFindingIndex] ? findingEditor(currentFindings[editingFindingIndex]) : ''}<div class="findings-heading"><strong>Findings summary</strong><span>${currentFindings.length} added</span></div><div class="finding-list">${currentFindings.length ? currentFindings.map((finding, index) => `<div class="finding-card ${editingFindingIndex === index ? 'editing' : ''}" data-edit-finding="${index}"><div><strong>${finding.text}</strong>${finding.note ? `<p class="finding-note">${finding.note}</p>` : ''}<span class="finding-meta"><span>${finding.status || 'Open'}</span><span>${(finding.attachments || []).length} attachments</span></span></div><div class="finding-actions"><button data-view-finding="${index}">View</button><button data-edit-action="${index}">Edit</button><button class="remove-finding" data-remove-finding="${index}" aria-label="Remove finding">×</button></div></div>`).join('') : '<p class="empty-findings">No raised findings for this area.</p>'}</div></div>
 `;
-  $('#chooseFindingPhotos').addEventListener('click', () => $('#findingAttachments').click());
-  $('#takeFindingPhoto').addEventListener('click', () => $('#findingCameraInput').click());
   $('#findingAttachments').addEventListener('change', (event) => stageFindingFiles(event));
   $('#findingCameraInput').onchange = (event) => stageFindingFiles(event);
+  $('#takeFindingPhoto').addEventListener('click', requireSecureCamera);
   $('#addFinding').addEventListener('click', addFinding);
   document.querySelectorAll('[data-edit-finding]').forEach((card) => card.addEventListener('click', (event) => { if (!event.target.closest('button')) { editingFindingIndex = Number(card.dataset.editFinding); renderAreaDetail(); } }));
   document.querySelectorAll('[data-view-finding]').forEach((button) => button.addEventListener('click', (event) => { event.stopPropagation(); editingFindingIndex = Number(button.dataset.viewFinding); findingViewMode = 'view'; renderAreaDetail(); }));
@@ -111,13 +123,91 @@ function renderAreaDetail() {
 function findingEditor(finding) {
   const attachments = finding.attachments || [];
   if (findingViewMode === 'view') return `<div class="finding-editor"><div class="editor-heading"><strong>View finding</strong><button id="closeFindingEditor" aria-label="Close finding editor">×</button></div><div class="finding-view"><h4>${finding.text}</h4><p>${finding.note || 'No note added.'}</p><div class="finding-meta"><span>${finding.status || 'Open'}</span><span>${attachments.length} attachments</span></div><div class="photo-grid">${attachments.map((file) => `<img class="photo-thumb" src="${file.data}" alt="${file.name}">`).join('')}</div></div></div>`;
-  return `<div class="finding-editor"><div class="editor-heading"><strong>Edit finding</strong><button id="closeFindingEditor" aria-label="Close finding editor">×</button></div><input id="editFindingText" value="${finding.text.replace(/"/g, '&quot;')}" aria-label="Finding description"><label class="notes-field editor-note">Note<textarea id="editFindingNote">${finding.note || ''}</textarea></label><div class="editor-row"><select id="editFindingStatus" aria-label="Finding status"><option ${finding.status === 'Open' ? 'selected' : ''}>Open</option><option ${finding.status === 'In progress' ? 'selected' : ''}>In progress</option><option ${finding.status === 'Resolved' ? 'selected' : ''}>Resolved</option></select><button id="saveFinding" class="button button-dark">Save changes</button></div><div class="finding-attachments"><div class="photo-heading"><strong>Finding photos</strong><span>${attachments.length} attached</span></div><div class="attachment-controls"><button id="addAttachment" class="button button-outline">Upload photos</button><button id="takeEditPhoto" class="button button-outline">Take photo</button></div><div class="attachment-grid">${attachments.map((file, index) => `<div class="attachment-card"><img src="${file.data}" alt="${file.name}"><div class="attachment-actions"><button data-replace-attachment="${index}">Replace</button><button data-remove-attachment="${index}">Remove</button></div></div>`).join('') || '<p class="empty-findings">No photos attached.</p>'}</div></div></div>`;
+  return `<div class="finding-editor"><div class="editor-heading"><strong>Edit finding</strong><button id="closeFindingEditor" aria-label="Close finding editor">×</button></div><input id="editFindingText" value="${finding.text.replace(/"/g, '&quot;')}" aria-label="Finding description"><label class="notes-field editor-note">Note<textarea id="editFindingNote">${finding.note || ''}</textarea></label><div class="editor-row"><select id="editFindingStatus" aria-label="Finding status"><option ${finding.status === 'Open' ? 'selected' : ''}>Open</option><option ${finding.status === 'In progress' ? 'selected' : ''}>In progress</option><option ${finding.status === 'Resolved' ? 'selected' : ''}>Resolved</option></select><button id="saveFinding" class="button button-dark">Save changes</button></div><div class="finding-attachments"><div class="photo-heading"><strong>Finding photos</strong><span>${attachments.length} attached</span></div><div class="attachment-controls"><label for="editAttachmentInput" id="addAttachment" class="button button-outline file-picker-button">Choose photos</label><label for="editCameraInput" id="takeEditPhoto" class="button button-outline file-picker-button">Take photo</label></div><div class="attachment-grid">${attachments.map((file, index) => `<div class="attachment-card"><img src="${file.data}" alt="${file.name}"><div class="attachment-actions"><button data-replace-attachment="${index}">Replace</button><button data-remove-attachment="${index}">Remove</button></div></div>`).join('') || '<p class="empty-findings">No photos attached.</p>'}</div></div></div>`;
 }
-function bindFindingEditor(finding) { $('#closeFindingEditor').addEventListener('click', () => { editingFindingIndex = null; renderAreaDetail(); }); if (findingViewMode !== 'edit') return; $('#saveFinding').addEventListener('click', () => { finding.text = $('#editFindingText').value.trim() || finding.text; finding.note = $('#editFindingNote').value; finding.status = $('#editFindingStatus').value; persist(); editingFindingIndex = null; renderAreaDetail(); }); $('#addAttachment').addEventListener('click', () => { attachmentTarget = { finding, index: null }; $('#editAttachmentInput').click(); }); $('#takeEditPhoto').addEventListener('click', () => { attachmentTarget = { finding, index: null }; $('#editCameraInput').click(); }); document.querySelectorAll('[data-replace-attachment]').forEach((button) => button.addEventListener('click', () => { attachmentTarget = { finding, index: Number(button.dataset.replaceAttachment) }; $('#editAttachmentInput').click(); })); document.querySelectorAll('[data-remove-attachment]').forEach((button) => button.addEventListener('click', () => { finding.attachments.splice(Number(button.dataset.removeAttachment), 1); persist(); renderAreaDetail(); })); }
+function requireSecureCamera(event) {
+  if (window.isSecureContext) return;
+  event.preventDefault();
+  showToast('Camera access needs the secure HTTPS app address.');
+}
+function bindFindingEditor(finding) { $('#closeFindingEditor').addEventListener('click', () => { editingFindingIndex = null; renderAreaDetail(); }); if (findingViewMode !== 'edit') return; $('#saveFinding').addEventListener('click', () => { finding.text = $('#editFindingText').value.trim() || finding.text; finding.note = $('#editFindingNote').value; finding.status = $('#editFindingStatus').value; persist(); editingFindingIndex = null; renderAreaDetail(); }); $('#addAttachment').addEventListener('click', () => { attachmentTarget = { finding, index: null }; }); $('#takeEditPhoto').addEventListener('click', requireSecureCamera); document.querySelectorAll('[data-replace-attachment]').forEach((button) => button.addEventListener('click', () => { attachmentTarget = { finding, index: Number(button.dataset.replaceAttachment) }; $('#editAttachmentInput').click(); })); document.querySelectorAll('[data-remove-attachment]').forEach((button) => button.addEventListener('click', () => { finding.attachments.splice(Number(button.dataset.removeAttachment), 1); persist(); renderAreaDetail(); })); }
 function stageFindingFiles(event) { const files = [...event.target.files].filter((file) => file.type.startsWith('image/')); if (files.length) pendingFindingFiles.push(...files); event.target.value = ''; renderAttachmentPreview(); }
 function renderAttachmentPreview() { $('#attachmentPreview').innerHTML = pendingFindingFiles.map((file) => `<span class="attachment-pill">${file.name}</span>`).join(''); }
-function readAttachment(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve({ name: file.name, type: file.type, data: reader.result }); reader.onerror = () => reject(new Error(`Could not read ${file.name}.`)); reader.readAsDataURL(file); }); }
-async function addFinding() { const input = $('#findingInput'); const text = input.value.trim(); if (!text) { input.focus(); return; } const button = $('#addFinding'); button.disabled = true; try { const attachments = await Promise.all(pendingFindingFiles.map(readAttachment)); const key = stateKey(); findings[key] = findings[key] || []; findings[key].push({ area: areasFor(activeInspection)[activeAreaIndex], text, note: $('#findingNote').value, attachments, status: 'Open' }); editingFindingIndex = null; areaState[key] = 'issue'; pendingFindingFiles = []; persist(); renderAreas(); renderAreaDetail(); resetFindingEntry(); } catch (error) { showToast(error.message); } finally { if ($('#addFinding')) $('#addFinding').disabled = false; } }
+function loadImage(file) {
+  const loadWithImage = () => new Promise((resolve, reject) => {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+    image.onload = () => resolve({ source: image, width: image.naturalWidth, height: image.naturalHeight, close: () => URL.revokeObjectURL(url) });
+    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Cannot open ${file.name}. On iPhone, set Camera > Formats to Most Compatible, then try again.`)); };
+    image.src = url;
+  });
+  if (!('createImageBitmap' in window)) return loadWithImage();
+  return createImageBitmap(file)
+    .then((bitmap) => ({ source: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close() }))
+    .catch(loadWithImage);
+}
+async function readAttachment(file) {
+  if (!file.type.startsWith('image/')) throw new Error(`"${file.name}" is not an image.`);
+  const image = await loadImage(file);
+  try {
+    const maxDimension = 1280;
+    const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Photo processing is unavailable in this browser.');
+    context.drawImage(image.source, 0, 0, canvas.width, canvas.height);
+    let quality = 0.68;
+    let data = canvas.toDataURL('image/jpeg', quality);
+    while (data.length > 420_000 && quality > 0.48) {
+      quality -= 0.1;
+      data = canvas.toDataURL('image/jpeg', quality);
+    }
+    while (data.length > 420_000 && canvas.width > 640) {
+      canvas.width = Math.round(canvas.width * 0.8);
+      canvas.height = Math.round(canvas.height * 0.8);
+      context.drawImage(image.source, 0, 0, canvas.width, canvas.height);
+      data = canvas.toDataURL('image/jpeg', 0.55);
+    }
+    if (data.length > 420_000) throw new Error(`"${file.name}" could not be compressed enough to save. Choose a smaller image.`);
+    return { name: file.name.replace(/\.[^.]+$/, '.jpg'), type: 'image/jpeg', data };
+  } finally {
+    image.close();
+  }
+}
+async function readAttachments(files) { const attachments = []; for (const file of files) attachments.push(await readAttachment(file)); return attachments; }
+async function addFinding() {
+  const input = $('#findingInput');
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  const button = $('#addFinding');
+  button.disabled = true;
+  try {
+    const attachments = await readAttachments(pendingFindingFiles);
+    const key = stateKey();
+    const wasAreaState = areaState[key];
+    findings[key] = findings[key] || [];
+    findings[key].push({ area: areasFor(activeInspection)[activeAreaIndex], text, note: $('#findingNote').value, attachments, status: 'Open' });
+    areaState[key] = 'issue';
+    if (!persist()) {
+      findings[key].pop();
+      if (!findings[key].length) delete findings[key];
+      if (wasAreaState === undefined) delete areaState[key];
+      else areaState[key] = wasAreaState;
+      return;
+    }
+    editingFindingIndex = null;
+    pendingFindingFiles = [];
+    renderAreas();
+    renderAreaDetail();
+    resetFindingEntry();
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    if ($('#addFinding')) $('#addFinding').disabled = false;
+  }
+}
 function resetFindingEntry() { const input = $('#findingInput'); if (!input) return; input.value = ''; $('#findingNote').value = ''; $('#findingAttachments').value = ''; pendingFindingFiles = []; }
 function renderUnitSelector() {
   const selector = $('#inspectionUnitSelect');
@@ -175,7 +265,7 @@ async function addEditorAttachments(event) {
   if (!attachmentTarget || !files.length) return;
   const target = attachmentTarget;
   try {
-    const uploaded = await Promise.all(files.map(readAttachment));
+    const uploaded = await readAttachments(files);
     target.finding.attachments = target.finding.attachments || [];
     if (target.index !== null) {
       target.finding.attachments[target.index] = uploaded.shift();
