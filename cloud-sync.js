@@ -265,6 +265,7 @@
   };
   window.addEventListener('storage', (event) => { if (stores.includes(event.key)) queueSave(); });
   window.snagCloudAuth = auth;
+  window.addEventListener('online', queueSave);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
   else initialize();
 })();
