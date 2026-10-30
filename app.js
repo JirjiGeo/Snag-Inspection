@@ -32,6 +32,7 @@ let pendingFindingFiles = [];
 const $ = (selector) => document.querySelector(selector);
 const storageKey = 'snagline-inspection-state';
 const maxPhotoDataLength = 100_000;
+let lastPersistError = null;
 const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
 areaState = saved.areaState || {};
 findings = saved.findings || {};
@@ -45,9 +46,11 @@ function areasFor(inspection) {
 function stateKey() { return `${activeInspection.id}-${areasFor(activeInspection)[activeAreaIndex]}`; }
 function isStorageQuotaError(error) { return error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED' || error.code === 22 || error.code === 1014; }
 function persist() {
+  lastPersistError = null;
   try {
     localStorage.setItem(storageKey, JSON.stringify({ areaState, findings, inspectionMeta }));
   } catch (error) {
+    lastPersistError = error;
     const message = isStorageQuotaError(error)
       ? 'This app has reached its browser storage limit, which is separate from your phone storage. Remove or reduce saved photos, then try again.'
       : `Could not save this inspection: ${error.message}`;
@@ -148,11 +151,10 @@ function loadImage(file) {
     .then((bitmap) => ({ source: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close() }))
     .catch(loadWithImage);
 }
-async function readAttachment(file) {
+async function readAttachment(file, maxDataLength = maxPhotoDataLength, maxDimension = 1024) {
   if (!file.type.startsWith('image/')) throw new Error(`"${file.name}" is not an image.`);
   const image = await loadImage(file);
   try {
-    const maxDimension = 1024;
     const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(image.width * scale));
@@ -162,23 +164,57 @@ async function readAttachment(file) {
     context.drawImage(image.source, 0, 0, canvas.width, canvas.height);
     let quality = 0.62;
     let data = canvas.toDataURL('image/jpeg', quality);
-    while (data.length > maxPhotoDataLength && quality > 0.38) {
+    while (data.length > maxDataLength && quality > 0.38) {
       quality = Math.max(0.38, quality - 0.08);
       data = canvas.toDataURL('image/jpeg', quality);
     }
-    while (data.length > maxPhotoDataLength && canvas.width > 480) {
+    while (data.length > maxDataLength && canvas.width > 320) {
       canvas.width = Math.round(canvas.width * 0.8);
       canvas.height = Math.round(canvas.height * 0.8);
       context.drawImage(image.source, 0, 0, canvas.width, canvas.height);
       data = canvas.toDataURL('image/jpeg', 0.48);
     }
-    if (data.length > maxPhotoDataLength) throw new Error(`"${file.name}" could not be reduced enough to fit this browser's storage limit. Choose a smaller image.`);
+    if (data.length > maxDataLength) throw new Error(`"${file.name}" could not be reduced enough to fit this browser's storage limit. Choose a smaller image.`);
     return { name: file.name.replace(/\.[^.]+$/, '.jpg'), type: 'image/jpeg', data };
   } finally {
     image.close();
   }
 }
 async function readAttachments(files) { const attachments = []; for (const file of files) attachments.push(await readAttachment(file)); return attachments; }
+async function compactFindingsForStorage() {
+  const compactedFindings = JSON.parse(JSON.stringify(findings));
+  let changed = false;
+  for (const areaFindings of Object.values(compactedFindings)) {
+    for (const finding of areaFindings) {
+      for (let index = 0; index < (finding.attachments || []).length; index += 1) {
+        const attachment = finding.attachments[index];
+        if (!attachment.data?.startsWith('data:image/')) continue;
+        const response = await fetch(attachment.data);
+        const blob = await response.blob();
+        const file = new File([blob], attachment.name || 'inspection-photo', { type: attachment.type || blob.type });
+        const compressed = await readAttachment(file, 25_000, 640);
+        if (compressed.data.length < attachment.data.length) {
+          finding.attachments[index] = { ...attachment, ...compressed, name: attachment.name || compressed.name };
+          changed = true;
+        }
+      }
+    }
+  }
+  if (!changed) return false;
+  try {
+    localStorage.setItem(storageKey, JSON.stringify({ areaState, findings: compactedFindings, inspectionMeta }));
+  } catch (error) {
+    const message = isStorageQuotaError(error)
+      ? 'This app has reached the browser storage limit. Remove some saved photos, then try again.'
+      : `Could not save this inspection: ${error.message}`;
+    showToast(message);
+    return false;
+  }
+  findings = compactedFindings;
+  window.snagCloudSave?.();
+  showToast('Photos reduced and finding saved on this device');
+  return true;
+}
 async function compactStoredPhotos() {
   const compactedFindings = JSON.parse(JSON.stringify(findings));
   let changed = false;
@@ -223,7 +259,7 @@ async function addFinding() {
     findings[key] = findings[key] || [];
     findings[key].push({ area: areasFor(activeInspection)[activeAreaIndex], text, note: $('#findingNote').value, attachments, status: 'Open' });
     areaState[key] = 'issue';
-    if (!persist()) {
+    if (!persist() && !(isStorageQuotaError(lastPersistError) && await compactFindingsForStorage())) {
       findings[key].pop();
       if (!findings[key].length) delete findings[key];
       if (wasAreaState === undefined) delete areaState[key];

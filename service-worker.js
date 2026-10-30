@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snagline-offline-v8';
+const CACHE_NAME = 'snagline-offline-v9';
 const APP_ASSETS = [
   './',
   './index.html',
