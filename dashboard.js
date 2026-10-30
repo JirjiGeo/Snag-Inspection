@@ -236,12 +236,11 @@ function renderAttention() {
       html: `<a class="attention-item is-overdue" href="activity.html"><span class="attention-marker" aria-hidden="true">!</span><span class="attention-copy"><span class="attention-label">Overdue inspection</span><strong>${escapeHtml(unitName(slot.unitId))}</strong><small>Was scheduled ${escapeHtml(slot.date)}${slot.time ? ` · ${escapeHtml(slot.time)}` : ''}</small></span><span class="attention-action">Review schedule <span aria-hidden="true">→</span></span></a>`
     });
   });
-  openFindings.filter((finding) => ['high', 'critical'].includes(String(finding.severity).toLowerCase())).forEach((finding) => {
-    const severity = String(finding.severity || 'High');
+  openFindings.filter((finding) => !['resolved', 'closed'].includes(String(finding.status || 'open').toLowerCase())).forEach((finding) => {
     items.push({
-      rank: severity.toLowerCase() === 'critical' ? 1 : 2,
-      tone: severity.toLowerCase() === 'critical' ? 'critical' : 'high',
-      html: `<a class="attention-item is-${severity.toLowerCase() === 'critical' ? 'critical' : 'high'}" href="inspection.html" data-inspection-unit="${escapeHtml(finding.unit.id)}"><span class="attention-marker" aria-hidden="true">${severity.toLowerCase() === 'critical' ? '!!' : '!'}</span><span class="attention-copy"><span class="attention-label">${escapeHtml(severity)} finding</span><strong>${escapeHtml(finding.text || 'Untitled finding')}</strong><small>${escapeHtml(finding.unit.name)} · ${escapeHtml(finding.status || 'Open')}</small></span><span class="attention-action">Open inspection <span aria-hidden="true">→</span></span></a>`
+      rank: 2,
+      tone: 'high',
+      html: `<a class="attention-item is-high" href="inspection.html" data-inspection-unit="${escapeHtml(finding.unit.id)}"><span class="attention-marker" aria-hidden="true">!</span><span class="attention-copy"><span class="attention-label">Open finding</span><strong>${escapeHtml(finding.text || 'Untitled finding')}</strong><small>${escapeHtml(finding.unit.name)} · ${escapeHtml(finding.status || 'Open')}</small></span><span class="attention-action">Open inspection <span aria-hidden="true">→</span></span></a>`
     });
   });
   const scheduledUnitIds = new Set(weekSlots.map((slot) => slot.unitId));

@@ -30,7 +30,7 @@ const areaNames = ['Entrance & Corridor', 'Living & Dining Area', 'Kitchen', 'Ma
 function unitFindings(unitId) {
   return Object.entries(findings)
     .filter(([key]) => key.startsWith(`${unitId}-`))
-    .flatMap(([key, list]) => (list || []).map((finding) => ({ ...finding, area: areaNames[Number(key.split('-').pop())] || 'General area' })));
+    .flatMap(([key, list]) => (list || []).map((finding) => ({ ...finding, area: finding.area || areaNames[Number(key.split('-').pop())] || 'General area' })));
 }
 
 function showToast(message) {
@@ -68,7 +68,6 @@ function renderReport() {
   const meta = inspectionMeta[unit.id] || {};
   const sections = getReportSections(unit.id);
   const uploadedReport = uploadedReports[unit.id];
-  const severityCounts = ['Low', 'Medium', 'High', 'Critical'].map((sev) => `${sev}: ${unitFindingsList.filter((f) => f.severity === sev).length}`).join(' · ');
   detail.innerHTML = `
     <h3>${unit.name}</h3>
     <p class="report-meta">${unit.record?.buildingName || '—'} · ${unit.record?.unitBedrooms || '—'} · ${unit.record?.unitLayout || '—'} · ${unit.record?.outdoorArea || '—'} · Inspected by: ${meta.inspectedBy || '—'} ${meta.date ? `· ${meta.date}` : ''}${meta.time ? ` ${meta.time}` : ''}</p>
@@ -106,8 +105,8 @@ function renderReport() {
       </label>
     </div>
     
-    <p class="report-meta" style="margin-top: 20px;">${unitFindingsList.length} total snags · ${severityCounts}</p>
-    ${unitFindingsList.length ? `<table class="report-table"><thead><tr><th>Area</th><th>Finding</th><th>Level</th><th>Severity</th><th>Status</th><th>Photos</th></tr></thead><tbody>${unitFindingsList.map((finding) => `<tr><td>${finding.area}</td><td><strong>${finding.text}</strong>${finding.note ? `<br><span class="report-meta">${finding.note}</span>` : ''}</td><td>${finding.level || '—'}</td><td><span class="sev sev-${(finding.severity || 'Medium').toLowerCase()}">${finding.severity || 'Medium'}</span></td><td>${finding.status || 'Open'}</td><td>${(finding.attachments || []).length}</td></tr>`).join('')}</tbody></table>` : '<p class="empty-report">No findings recorded for this unit.</p>'}`;
+    <p class="report-meta" style="margin-top: 20px;">${unitFindingsList.length} total snags</p>
+    ${unitFindingsList.length ? `<table class="report-table"><thead><tr><th>Area</th><th>Finding</th><th>Status</th><th>Photos</th></tr></thead><tbody>${unitFindingsList.map((finding) => `<tr><td>${escapeHtml(finding.area)}</td><td><strong>${escapeHtml(finding.text)}</strong>${finding.note ? `<br><span class="report-meta">${escapeHtml(finding.note)}</span>` : ''}</td><td>${escapeHtml(finding.status || 'Open')}</td><td>${(finding.attachments || []).length}</td></tr>`).join('')}</tbody></table>` : '<p class="empty-report">No findings recorded for this unit.</p>'}`;
   
   $('#exportUnitReport').addEventListener('click', () => exportReport(unit, unitFindingsList, meta));
   $('#reportPdfInput').addEventListener('change', async (event) => {
@@ -219,7 +218,7 @@ function base64Bytes(data) {
 }
 
 function exportReport(unit, unitFindingsList, meta) {
-  const headers = ['Unit', 'Building', 'Owner', 'Bedrooms', 'Layout', 'Outdoor area', 'Inspection date', 'Inspection time', 'Inspected by', 'Area', 'Finding', 'Level', 'Severity', 'Status', 'Note', 'Photo Count', 'Photos'];
+  const headers = ['Unit', 'Building', 'Owner', 'Bedrooms', 'Layout', 'Outdoor area', 'Inspection date', 'Inspection time', 'Inspected by', 'Area', 'Finding', 'Status', 'Note', 'Photo Count', 'Photos'];
   const media = [];
   const rows = [
     ['INSPECTION REPORT'],
@@ -235,7 +234,7 @@ function exportReport(unit, unitFindingsList, meta) {
     const photoNames = attachments.map((attachment, index) => `Photo ${index + 1}: ${attachment.name || 'image'}`).join(' | ') || 'No photos';
     rows.push([
       unit.name, unit.record?.buildingName || '', unit.record?.ownerName || '', unit.record?.unitBedrooms || '', unit.record?.unitLayout || '', unit.record?.outdoorArea || '',
-      meta.date || '', meta.time || '', meta.inspectedBy || '', finding.area || '', finding.text || '', finding.level || '', finding.severity || '', finding.status || '', finding.note || '', attachments.length, photoNames
+      meta.date || '', meta.time || '', meta.inspectedBy || '', finding.area || '', finding.text || '', finding.status || '', finding.note || '', attachments.length, photoNames
     ]);
     const rowNumber = findingIndex + 5;
     attachments.forEach((attachment, photoIndex) => {
@@ -251,7 +250,7 @@ function exportReport(unit, unitFindingsList, meta) {
 
   const cell = (value) => `<c t="inlineStr"><is><t>${escapeXml(String(value ?? ''))}</t></is></c>`;
   const sheetRows = rows.map((row, index) => `<row r="${index + 1}"${index >= 4 ? ' ht="110" customHeight="1"' : ''}>${row.map(cell).join('')}</row>`).join('');
-  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><cols><col min="1" max="17" width="18" customWidth="1"/></cols><sheetData>${sheetRows}</sheetData><drawing r:id="rId1"/></worksheet>`;
+  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><cols><col min="1" max="15" width="18" customWidth="1"/></cols><sheetData>${sheetRows}</sheetData><drawing r:id="rId1"/></worksheet>`;
   const drawingXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${drawingAnchors.map((anchor, index) => `<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>${16 + anchor.photoIndex * 2}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${anchor.rowNumber - 1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>${18 + anchor.photoIndex * 2}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${anchor.rowNumber}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${index + 1}" name="${escapeXml(anchor.name)}"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId${index + 1}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:twoCellAnchor>`).join('')}</xdr:wsDr>`;
   const drawingRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${media.map((image, index) => `<Relationship Id="rId${index + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${image.name.split('/').pop()}"/>`).join('')}</Relationships>`;
   const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Inspection Data" sheetId="1" r:id="rId1"/></sheets></workbook>`;
@@ -285,8 +284,6 @@ async function exportWordReport(unit, unitFindingsList, meta, reportSections) {
       groupedByArea[finding.area].push(finding);
     });
 
-    const severityOrder = { 'Critical': 0, 'High': 1, 'Medium': 2, 'Low': 3 };
-
     // Build HTML content for Word document
     let htmlContent = `<!DOCTYPE html>
 <html>
@@ -305,10 +302,6 @@ async function exportWordReport(unit, unitFindingsList, meta, reportSections) {
     .meta { color: #666; font-size: 12px; }
     .section-title { color: #013220; font-weight: bold; margin-top: 20px; }
     .finding { margin-left: 20px; margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid #013220; }
-    .severity-low { border-left-color: #67b58a; }
-    .severity-medium { border-left-color: #e0b35c; }
-    .severity-high { border-left-color: #e58c69; }
-    .severity-critical { border-left-color: #c95757; }
     .photo-container { margin: 15px 0; }
     .photo-container img { width: 76px; height: 76px; object-fit: contain; border: 1px solid #999; margin: 10px 0; }
     .photo-label { margin: 10px 0 5px 0; font-weight: bold; font-size: 12px; }
@@ -362,14 +355,8 @@ async function exportWordReport(unit, unitFindingsList, meta, reportSections) {
 <tr><th>Inspected By</th><td>${meta.inspectedBy || 'N/A'}</td></tr>
 </table>`;
 
-    // Summary
-    const severitySummary = ['Critical', 'High', 'Medium', 'Low']
-      .map(sev => `${sev}: ${unitFindingsList.filter((f) => f.severity === sev).length}`)
-      .join(' | ');
-    
     htmlContent += `<h2>Summary</h2>
-<p><strong>Total Findings:</strong> ${unitFindingsList.length}</p>
-<p>${severitySummary}</p>`;
+<p><strong>Total Findings:</strong> ${unitFindingsList.length}</p>`;
 
     // Detailed Findings
     if (unitFindingsList.length > 0) {
@@ -378,14 +365,12 @@ async function exportWordReport(unit, unitFindingsList, meta, reportSections) {
       Object.keys(groupedByArea).sort().forEach((area) => {
         htmlContent += `<h3>${area}</h3>`;
 
-        const areaFindings = groupedByArea[area].sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+        const areaFindings = groupedByArea[area];
         
         areaFindings.forEach((finding, findingIndex) => {
-          htmlContent += `<div class="finding severity-${(finding.severity || 'Medium').toLowerCase()}">
+          htmlContent += `<div class="finding">
 <p><strong>${findingIndex + 1}. ${finding.text}</strong></p>
 <table style="width: 100%; margin: 10px 0;">
-<tr><th style="width: 20%;">Severity</th><td>${finding.severity || 'Medium'}</td></tr>
-<tr><th>Level</th><td>${finding.level || 'Main Level'}</td></tr>
 <tr><th>Status</th><td>${finding.status || 'Open'}</td></tr>
 ${finding.note ? `<tr><th>Note</th><td>${finding.note}</td></tr>` : ''}
 </table>`;

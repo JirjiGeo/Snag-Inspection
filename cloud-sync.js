@@ -64,6 +64,7 @@
       else localStorage.setItem(key, snapshot[key]);
     });
     applyingRemote = false;
+    window.dispatchEvent(new Event('snag-cloud-snapshot-applied'));
   };
   const saveSnapshot = async () => {
     if (!client || !user || applyingRemote) return;
