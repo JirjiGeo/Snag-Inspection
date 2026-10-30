@@ -256,7 +256,16 @@ function refreshApartmentProfiles() {
 window.addEventListener('storage', (event) => {
   if (event.key === 'snagline-apartment-record') refreshApartmentProfiles();
 });
-window.addEventListener('snag-cloud-snapshot-applied', refreshApartmentProfiles);
+window.addEventListener('snag-cloud-snapshot-applied', () => {
+  const latest = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  areaState = latest.areaState || {};
+  findings = latest.findings || {};
+  inspectionMeta = latest.inspectionMeta || {};
+  const linked = JSON.parse(localStorage.getItem('snagline-linked-apartment') || '{}');
+  if (linked.id) activeInspection = inspections.find((inspection) => inspection.id === linked.id) || activeInspection;
+  activeAreaIndex = 0;
+  refreshApartmentProfiles();
+});
 
 
 async function addEditorAttachments(event) {
