@@ -293,11 +293,11 @@ function renderInspectionMeta() {
   const meta = inspectionMeta[activeInspection.id] || {};
   $('#inspectionDate').value = meta.date || '';
   $('#inspectionTime').value = meta.time || '';
-  $('#inspectedBy').value = meta.inspectedBy || '';
+  $('#inspectedBy').value = meta.inspectedBy || apartment?.record?.inspectedBy || '';
 }
 
 function bindInspectionMeta() {
-  ['inspectionDate', 'inspectionTime', 'inspectedBy'].forEach((id) => {
+  ['inspectionDate', 'inspectionTime'].forEach((id) => {
     $(`#${id}`).addEventListener('input', () => {
       inspectionMeta[activeInspection.id] = {
         date: $('#inspectionDate').value,
@@ -306,6 +306,21 @@ function bindInspectionMeta() {
       };
       persist();
     });
+  });
+  $('#inspectedBy').addEventListener('change', () => {
+    const inspectedBy = $('#inspectedBy').value;
+    inspectionMeta[activeInspection.id] = {
+      date: $('#inspectionDate').value,
+      time: $('#inspectionTime').value,
+      inspectedBy
+    };
+    const apartmentState = JSON.parse(localStorage.getItem('snagline-apartment-record') || '{}');
+    const apartment = (apartmentState.apartments || []).find((unit) => unit.id === activeInspection.id);
+    if (apartment) {
+      apartment.record.inspectedBy = inspectedBy;
+      localStorage.setItem('snagline-apartment-record', JSON.stringify(apartmentState));
+    }
+    persist();
   });
 }
 

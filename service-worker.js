@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snagline-offline-v10';
+const CACHE_NAME = 'snagline-offline-v11';
 const APP_ASSETS = [
   './',
   './index.html',
@@ -16,6 +16,7 @@ const APP_ASSETS = [
   './cloud-sync.js',
   './cloud-config.js',
   './offline.js',
+  './inspector-options.js',
   './apartments.js',
   './activity.js',
   './reports.js',

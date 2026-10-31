@@ -177,11 +177,14 @@ function saveInspectionSchedule() {
 
 function renderRecord() {
   const apartment = activeApartment();
+  const inspectionMeta = JSON.parse(localStorage.getItem('snagline-inspection-state') || '{}').inspectionMeta || {};
   const fields = ['unitName', 'soNumber', 'ownerName', 'ownerPhone', 'ownerEmail', 'buildingName', 'unitSpace', 'unitBedrooms', 'unitLayout', 'outdoorArea', 'unitStatus', 'inspectedBy', 'inspectionStatus', 'quotedAmount', 'invoicedAmount', 'calculatedArea', 'qbelChargesWithoutVat', 'qbelChargesWithVat', 'firstBridgeWithoutVat', 'firstBridgeWithVat', 'paymentStatus', 'paymentMethod'];
   fields.forEach((id) => {
     const field = $(`#${id}`);
     if (!field) return;
-    field.value = id === 'unitName' ? apartment.name : apartment.record[id] || (id === 'paymentStatus' ? 'Payment Pending' : '');
+    field.value = id === 'unitName' ? apartment.name
+      : id === 'inspectedBy' ? apartment.record.inspectedBy || inspectionMeta[apartment.id]?.inspectedBy || ''
+        : apartment.record[id] || (id === 'paymentStatus' ? 'Payment Pending' : '');
     field.defaultValue = field.value;
     field.disabled = !profileEditing;
   });
@@ -254,6 +257,13 @@ function saveRecord(show = true) {
   apartment.record.unitStatus = $('#unitStatus').value;
   apartment.record.inspectedBy = $('#inspectedBy').value;
   apartment.record.inspectionStatus = $('#inspectionStatus').value;
+  const inspectionState = JSON.parse(localStorage.getItem('snagline-inspection-state') || '{}');
+  inspectionState.inspectionMeta = inspectionState.inspectionMeta || {};
+  const inspectionMeta = inspectionState.inspectionMeta[apartment.id] || {};
+  if (inspectionMeta.inspectedBy !== apartment.record.inspectedBy) {
+    inspectionState.inspectionMeta[apartment.id] = { ...inspectionMeta, inspectedBy: apartment.record.inspectedBy };
+    localStorage.setItem('snagline-inspection-state', JSON.stringify(inspectionState));
+  }
   updateInvoice();
   apartment.record.quotedAmount = $('#quotedAmount').value;
   apartment.record.invoicedAmount = $('#invoicedAmount').value;

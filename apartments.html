@@ -95,7 +95,7 @@
         <div class="record-panel stage-divider" role="group" aria-label="Unit workflow">
           <div class="workflow-fields">
             <label>Current stage<select id="unitStatus"><option>Quote For Approval</option><option>For Inspection</option><option>Completed</option><option>Cancelled</option></select></label>
-            <label>Inspected by<input id="inspectedBy" type="text" placeholder="Inspector name"></label>
+            <label>Inspected by<select id="inspectedBy" data-inspector-picker><option value="">Select inspector</option></select></label>
           </div>
           <div class="workflow-fields">
             <label>Inspection status<select id="inspectionStatus"><option>Completed</option><option selected>To be scheduled</option><option>Confirmed</option><option>Cancelled</option></select></label>
@@ -130,6 +130,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="cloud-config.js"></script>
   <script src="cloud-sync.js"></script>
+  <script src="inspector-options.js"></script>
   <script src="apartments.js"></script>
   <script src="offline.js"></script>
 </body>
