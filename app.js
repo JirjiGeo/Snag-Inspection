@@ -293,7 +293,7 @@ function renderInspectionMeta() {
   const meta = inspectionMeta[activeInspection.id] || {};
   $('#inspectionDate').value = meta.date || '';
   $('#inspectionTime').value = meta.time || '';
-  $('#inspectedBy').value = meta.inspectedBy || apartment?.record?.inspectedBy || '';
+  window.snagSetInspectorSelection($('#inspectedBy'), window.snagPreferredInspectorNames(meta.inspectedBy, apartment?.record?.inspectedBy));
 }
 
 function bindInspectionMeta() {
@@ -302,13 +302,13 @@ function bindInspectionMeta() {
       inspectionMeta[activeInspection.id] = {
         date: $('#inspectionDate').value,
         time: $('#inspectionTime').value,
-        inspectedBy: $('#inspectedBy').value
+        inspectedBy: window.snagGetInspectorSelection($('#inspectedBy'))
       };
       persist();
     });
   });
   $('#inspectedBy').addEventListener('change', () => {
-    const inspectedBy = $('#inspectedBy').value;
+    const inspectedBy = window.snagGetInspectorSelection($('#inspectedBy'));
     inspectionMeta[activeInspection.id] = {
       date: $('#inspectionDate').value,
       time: $('#inspectionTime').value,

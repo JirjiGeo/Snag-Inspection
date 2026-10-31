@@ -12,16 +12,16 @@ function inspectionState() {
 }
 
 function inspectorFor(apartment, state = inspectionState()) {
-  return state.inspectionMeta?.[apartment.id]?.inspectedBy || apartment.record?.inspectedBy || '';
+  return window.snagPreferredInspectorNames(state.inspectionMeta?.[apartment.id]?.inspectedBy, apartment.record?.inspectedBy);
 }
 
 function summarizeInspectors(apartments, state = inspectionState()) {
   const summaries = new Map((window.SNAG_INSPECTORS || []).map((inspector) => [inspector, []]));
   apartments.forEach((apartment) => {
-    const inspector = inspectorFor(apartment, state);
-    if (!inspector) return;
-    if (!summaries.has(inspector)) summaries.set(inspector, []);
-    summaries.get(inspector).push(apartment.name || 'Not set');
+    inspectorFor(apartment, state).forEach((inspector) => {
+      if (!summaries.has(inspector)) summaries.set(inspector, []);
+      summaries.get(inspector).push(apartment.name || 'Not set');
+    });
   });
   return [...summaries].map(([inspector, units]) => ({ inspector, units }));
 }
@@ -68,7 +68,7 @@ function exportFinancials() {
     financialRows.push([
       { value: apartment.name || 'Not set' },
       { value: 'Paid' },
-      { value: inspectorFor(apartment, state) },
+      { value: inspectorFor(apartment, state).join(', ') },
       { value: record.unitSpace || '-' },
       ...amounts
     ]);
@@ -101,7 +101,7 @@ function exportFinancials() {
       .sort((first, second) => `${first.date}T${first.time || ''}`.localeCompare(`${second.date}T${second.time || ''}`));
     const now = new Date();
     const schedule = bookings.find((slot) => new Date(`${slot.date}T${slot.time || '23:59'}`) >= now) || bookings[bookings.length - 1];
-    const details = { ...record, inspectedBy: inspectorFor(apartment, state), inspectionDate: schedule?.date || '', inspectionTime: schedule?.time || '' };
+    const details = { ...record, inspectedBy: inspectorFor(apartment, state).join(', '), inspectionDate: schedule?.date || '', inspectionTime: schedule?.time || '' };
     detailRows.push([
       { value: apartment.name || 'Not set' },
       ...detailFields.map(([field]) => {
@@ -152,7 +152,7 @@ function renderFinancials() {
     payment.className = `payment-status ${paid ? 'is-paid' : 'is-pending'}`;
     row.append(payment);
     const inspector = document.createElement('td');
-    inspector.textContent = inspectorFor(apartment, state) || '-';
+    inspector.textContent = inspectorFor(apartment, state).join(', ') || '-';
     row.append(inspector);
     const space = document.createElement('td');
     space.textContent = apartment.record?.unitSpace || '-';

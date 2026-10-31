@@ -182,9 +182,11 @@ function renderRecord() {
   fields.forEach((id) => {
     const field = $(`#${id}`);
     if (!field) return;
-    field.value = id === 'unitName' ? apartment.name
-      : id === 'inspectedBy' ? apartment.record.inspectedBy || inspectionMeta[apartment.id]?.inspectedBy || ''
-        : apartment.record[id] || (id === 'paymentStatus' ? 'Payment Pending' : '');
+    if (id === 'inspectedBy') {
+      window.snagSetInspectorSelection(field, window.snagPreferredInspectorNames(inspectionMeta[apartment.id]?.inspectedBy, apartment.record.inspectedBy));
+    } else {
+      field.value = id === 'unitName' ? apartment.name : apartment.record[id] || (id === 'paymentStatus' ? 'Payment Pending' : '');
+    }
     field.defaultValue = field.value;
     field.disabled = !profileEditing;
   });
@@ -229,7 +231,7 @@ function bindRecord() {
       renderApartmentList();
     });
   });
-  ['unitName', 'soNumber', 'ownerName', 'ownerPhone', 'ownerEmail', 'buildingName', 'unitSpace', 'unitBedrooms', 'unitLayout', 'outdoorArea', 'unitStatus', 'inspectedBy', 'inspectionStatus', 'quotedAmount', 'calculatedArea', 'paymentStatus', 'paymentMethod'].forEach((id) => {
+  ['unitName', 'soNumber', 'ownerName', 'ownerPhone', 'ownerEmail', 'buildingName', 'unitSpace', 'unitBedrooms', 'unitLayout', 'outdoorArea', 'unitStatus', 'inspectionStatus', 'quotedAmount', 'calculatedArea', 'paymentStatus', 'paymentMethod'].forEach((id) => {
     $(`#${id}`).addEventListener('input', () => {
       if (!profileEditing) return;
       updateInvoice();
@@ -239,6 +241,11 @@ function bindRecord() {
       $('#detailTitle').textContent = activeApartment().name;
       renderApartmentList();
     });
+  });
+  $('#inspectedBy').addEventListener('change', () => {
+    if (!profileEditing) return;
+    saveRecord(false);
+    renderApartmentList();
   });
 }
 
@@ -255,12 +262,12 @@ function saveRecord(show = true) {
   apartment.record.unitLayout = $('#unitLayout').value;
   apartment.record.outdoorArea = $('#outdoorArea').value;
   apartment.record.unitStatus = $('#unitStatus').value;
-  apartment.record.inspectedBy = $('#inspectedBy').value;
+  apartment.record.inspectedBy = window.snagGetInspectorSelection($('#inspectedBy'));
   apartment.record.inspectionStatus = $('#inspectionStatus').value;
   const inspectionState = JSON.parse(localStorage.getItem('snagline-inspection-state') || '{}');
   inspectionState.inspectionMeta = inspectionState.inspectionMeta || {};
   const inspectionMeta = inspectionState.inspectionMeta[apartment.id] || {};
-  if (inspectionMeta.inspectedBy !== apartment.record.inspectedBy) {
+  if (JSON.stringify(window.snagInspectorNames(inspectionMeta.inspectedBy)) !== JSON.stringify(apartment.record.inspectedBy)) {
     inspectionState.inspectionMeta[apartment.id] = { ...inspectionMeta, inspectedBy: apartment.record.inspectedBy };
     localStorage.setItem('snagline-inspection-state', JSON.stringify(inspectionState));
   }

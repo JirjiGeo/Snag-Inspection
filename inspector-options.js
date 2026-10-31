@@ -5,11 +5,39 @@ window.SNAG_INSPECTORS = Object.freeze([
   'Mathew Samuel'
 ]);
 
+window.snagInspectorNames = (value) => [...new Set(
+  (Array.isArray(value) ? value : value ? [value] : [])
+    .map((name) => String(name).trim())
+    .filter(Boolean)
+)];
+
+window.snagPreferredInspectorNames = (primary, fallback) => {
+  const selected = window.snagInspectorNames(primary);
+  return selected.length ? selected : window.snagInspectorNames(fallback);
+};
+
+window.snagSetInspectorSelection = (picker, value) => {
+  const selected = window.snagInspectorNames(value);
+  selected.forEach((name) => {
+    if ([...picker.options].some((option) => option.value === name)) return;
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    picker.append(option);
+  });
+  [...picker.options].forEach((option) => { option.selected = selected.includes(option.value); });
+};
+
+window.snagGetInspectorSelection = (picker) => [...picker.selectedOptions].map((option) => option.value);
+
 document.querySelectorAll('[data-inspector-picker]').forEach((picker) => {
+  picker.querySelector('option[value=""]')?.remove();
   window.SNAG_INSPECTORS.forEach((inspector) => {
     const option = document.createElement('option');
     option.value = inspector;
     option.textContent = inspector;
     picker.append(option);
   });
+  picker.multiple = true;
+  picker.size = window.SNAG_INSPECTORS.length;
 });

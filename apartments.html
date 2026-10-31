@@ -95,7 +95,7 @@
         <div class="record-panel stage-divider" role="group" aria-label="Unit workflow">
           <div class="workflow-fields">
             <label>Current stage<select id="unitStatus"><option>Quote For Approval</option><option>For Inspection</option><option>Completed</option><option>Cancelled</option></select></label>
-            <label>Inspected by<select id="inspectedBy" data-inspector-picker><option value="">Select inspector</option></select></label>
+            <label>Inspected by<select id="inspectedBy" data-inspector-picker aria-describedby="inspectorSelectionHelp"><option value="">Select inspector</option></select><small id="inspectorSelectionHelp">Hold Ctrl (Windows) or Command (Mac) to select multiple.</small></label>
           </div>
           <div class="workflow-fields">
             <label>Inspection status<select id="inspectionStatus"><option>Completed</option><option selected>To be scheduled</option><option>Confirmed</option><option>Cancelled</option></select></label>
