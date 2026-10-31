@@ -68,6 +68,9 @@ body,.app-shell,.dashboard-main{background:var(--dashboard-paper);color:var(--da
 .agenda-item:hover .agenda-copy strong{text-decoration:underline}
 .agenda-item.is-priority .agenda-date{background:#fbf0df;color:#a65e12}
 .agenda-item.is-priority .agenda-time{color:#a65e12}
+.is-due-soon{animation:due-soon-blink 1s steps(2,start) infinite}
+@keyframes due-soon-blink{to{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.is-due-soon{animation:none;outline:2px solid #b9791c;outline-offset:1px}}
 .agenda-empty{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;padding:20px 0;color:var(--dashboard-ink)}
 .agenda-empty-mark{display:grid;width:34px;height:34px;place-items:center;background:#f5efe2;border-radius:50%;color:#a65e12;font-size:20px}
 .agenda-empty small{color:var(--dashboard-muted);font-size:10px}

@@ -20,6 +20,13 @@ function dateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+function isDueInTwoDays(date) {
+  const dueDate = new Date();
+  dueDate.setHours(0, 0, 0, 0);
+  dueDate.setDate(dueDate.getDate() + 2);
+  return date === dateKey(dueDate);
+}
+
 const apartmentStore = readStore(storage.apartments);
 const apartments = Array.isArray(apartmentStore.apartments) ? apartmentStore.apartments : [];
 const scheduleStore = readStore(storage.schedule);
@@ -157,7 +164,7 @@ function renderUnitDetails(view) {
     if (appointmentView) {
       const appointment = slot ? `${escapeHtml(slot.date)}${slot.time ? ` · ${escapeHtml(slot.time)}` : ''}` : 'No future booking';
       const priority = slot?.priority && slot.priority !== 'Normal' ? `${escapeHtml(slot.priority)} priority` : 'Normal priority';
-      return `<article class="dashboard-detail-row"><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Inspection slot</strong><span>${appointment}</span></div><div><strong>Inspection status</strong><span>${escapeHtml(record.inspectionStatus || 'To be scheduled')}</span></div><div><strong>Priority</strong><span>${priority}</span></div><a href="activity.html">Open schedule</a></article>`;
+      return `<article class="dashboard-detail-row ${slot && isDueInTwoDays(slot.date) ? 'is-due-soon' : ''}"${slot && isDueInTwoDays(slot.date) ? ' aria-label="Inspection due in two days"' : ''}><div><strong>${escapeHtml(unit.name)}</strong><span>${displayValue(record.buildingName)}</span></div><div><strong>Inspection slot</strong><span>${appointment}</span></div><div><strong>Inspection status</strong><span>${escapeHtml(record.inspectionStatus || 'To be scheduled')}</span></div><div><strong>Priority</strong><span>${priority}</span></div><a href="activity.html">Open schedule</a></article>`;
     }
     const status = record.inspectionStatus || 'To be scheduled';
     const stage = record.unitStatus || 'Quote For Approval';
@@ -272,7 +279,7 @@ function renderUpcoming() {
       const unit = apartments.find((item) => item.id === slot.unitId);
       const building = unit?.record?.buildingName;
       const priority = slot.priority && slot.priority !== 'Normal' ? `${escapeHtml(slot.priority)} priority` : 'Inspection';
-      return `<a class="agenda-item ${slot.priority && slot.priority !== 'Normal' ? 'is-priority' : ''}" href="activity.html"><span class="agenda-date"><strong>${day}</strong><small>${weekday}</small></span><span class="agenda-time">${escapeHtml(slot.time || '—')}</span><span class="agenda-copy"><strong>${escapeHtml(unitName(slot.unitId))}</strong><small>${escapeHtml(building || priority)}</small></span><span class="agenda-arrow" aria-hidden="true">↗</span></a>`;
+      return `<a class="agenda-item ${slot.priority && slot.priority !== 'Normal' ? 'is-priority' : ''} ${isDueInTwoDays(slot.date) ? 'is-due-soon' : ''}"${isDueInTwoDays(slot.date) ? ' aria-label="Inspection due in two days"' : ''} href="activity.html"><span class="agenda-date"><strong>${day}</strong><small>${weekday}</small></span><span class="agenda-time">${escapeHtml(slot.time || '—')}</span><span class="agenda-copy"><strong>${escapeHtml(unitName(slot.unitId))}</strong><small>${escapeHtml(building || priority)}</small></span><span class="agenda-arrow" aria-hidden="true">↗</span></a>`;
     }).join('')
     : '<div class="agenda-empty"><span class="agenda-empty-mark" aria-hidden="true">—</span><div><strong>No bookings ahead</strong><small>Your next 7 days are clear.</small></div><a href="activity.html">Open schedule</a></div>';
 }
