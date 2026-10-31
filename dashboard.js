@@ -279,7 +279,8 @@ function renderUpcoming() {
       const unit = apartments.find((item) => item.id === slot.unitId);
       const building = unit?.record?.buildingName;
       const priority = slot.priority && slot.priority !== 'Normal' ? `${escapeHtml(slot.priority)} priority` : 'Inspection';
-      return `<a class="agenda-item ${slot.priority && slot.priority !== 'Normal' ? 'is-priority' : ''} ${isDueInTwoDays(slot.date) ? 'is-due-soon' : ''}"${isDueInTwoDays(slot.date) ? ' aria-label="Inspection due in two days"' : ''} href="activity.html"><span class="agenda-date"><strong>${day}</strong><small>${weekday}</small></span><span class="agenda-time">${escapeHtml(slot.time || '—')}</span><span class="agenda-copy"><strong>${escapeHtml(unitName(slot.unitId))}</strong><small>${escapeHtml(building || priority)}</small></span><span class="agenda-arrow" aria-hidden="true">↗</span></a>`;
+      const dueSoon = isDueInTwoDays(slot.date);
+      return `<a class="agenda-item ${slot.priority && slot.priority !== 'Normal' ? 'is-priority' : ''} ${dueSoon ? 'is-due-soon' : ''}" href="activity.html"><span class="agenda-date"><strong>${day}</strong><small>${weekday}</small></span><span class="agenda-time">${escapeHtml(slot.time || '—')}</span><span class="agenda-copy"><strong>${escapeHtml(unitName(slot.unitId))}${dueSoon ? ' <span class="due-soon-label">Due in 2 days</span>' : ''}</strong><small>${escapeHtml(building || priority)}</small></span><span class="agenda-arrow" aria-hidden="true">↗</span></a>`;
     }).join('')
     : '<div class="agenda-empty"><span class="agenda-empty-mark" aria-hidden="true">—</span><div><strong>No bookings ahead</strong><small>Your next 7 days are clear.</small></div><a href="activity.html">Open schedule</a></div>';
 }
