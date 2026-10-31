@@ -25,19 +25,16 @@ function formatDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-function isDueInTwoDays(date) {
-  const dueDate = new Date();
-  dueDate.setHours(0, 0, 0, 0);
-  dueDate.setDate(dueDate.getDate() + 2);
-  return date === formatDate(dueDate);
-}
-
 function unitName(id) {
   return apartments.find((unit) => unit.id === id)?.name || 'Unknown unit';
 }
 
 function unitPaymentStatus(id) {
   return apartments.find((unit) => unit.id === id)?.record?.paymentStatus === 'Paid' ? 'Paid' : 'Payment Pending';
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 }
 
 function unitInspectionStatus(id) {
@@ -50,9 +47,7 @@ function paymentLabel(id) {
 }
 
 function inspectionLabel(id) {
-  const status = unitInspectionStatus(id);
-  const cssClass = status.toLowerCase().replace(/\s+/g, '-');
-  return `<span class="inspection-label is-${cssClass}">${status}</span>`;
+  return `<span class="inspection-label">Inspection: ${escapeHtml(unitInspectionStatus(id))}</span>`;
 }
 
 function renderPaymentStatusField() {
@@ -64,11 +59,7 @@ function renderPaymentStatusField() {
 }
 
 function renderInspectionStatusField() {
-  const status = unitInspectionStatus($('#slotUnit').value);
-  const field = $('#slotInspectionStatus');
-  field.value = status;
-  ['is-to-be-scheduled', 'is-confirmed', 'is-cancelled', 'is-completed'].forEach((className) => field.classList.remove(className));
-  field.classList.add(`is-${status.toLowerCase().replace(/\s+/g, '-')}`);
+  $('#slotInspectionStatus').value = unitInspectionStatus($('#slotUnit').value);
 }
 
 function renderUnits() {
@@ -101,10 +92,7 @@ function renderUpcoming() {
     .filter((slot) => new Date(`${slot.date}T${slot.time || '00:00'}`) >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
     .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
   $('#upcomingList').innerHTML = upcoming.length
-    ? upcoming.map((slot) => {
-      const dueSoon = isDueInTwoDays(slot.date);
-      return `<div class="upcoming-item ${dueSoon ? 'is-due-soon' : ''}" data-payment-status="${unitPaymentStatus(slot.unitId)}"><button class="slot-summary" data-slot-id="${slot.id}"><strong>${unitName(slot.unitId)}${dueSoon ? ' <span class="due-soon-label">Due in 2 days</span>' : ''}</strong><span class="slot-meta">${slot.date} · ${slot.time || 'Time not set'} · ${paymentLabel(slot.unitId)} · ${inspectionLabel(slot.unitId)}${slot.notes ? ` · ${slot.notes}` : ''}</span></button><div class="upcoming-actions"><button class="inspect" data-open-inspection="${slot.unitId}">Open inspection</button></div></div>`;
-    }).join('')
+    ? upcoming.map((slot) => `<div class="upcoming-item" data-payment-status="${unitPaymentStatus(slot.unitId)}"><button class="slot-summary" data-slot-id="${slot.id}"><strong>${unitName(slot.unitId)}</strong><span class="slot-meta">${slot.date} · ${slot.time || 'Time not set'} · ${paymentLabel(slot.unitId)} · ${inspectionLabel(slot.unitId)}${slot.notes ? ` · ${slot.notes}` : ''}</span></button><div class="upcoming-actions"><button class="inspect" data-open-inspection="${slot.unitId}">Open inspection</button></div></div>`).join('')
     : '<p class="upcoming-empty">No upcoming inspections booked.</p>';
   document.querySelectorAll('.slot-summary').forEach((item) => item.addEventListener('click', () => editSlot(item.dataset.slotId)));
   document.querySelectorAll('[data-open-inspection]').forEach((button) => button.addEventListener('click', () => openInspection(button.dataset.openInspection)));
@@ -132,10 +120,7 @@ function renderCalendar() {
     const daySlots = slots.filter((slot) => slot.date === key);
     const isToday = key === formatDate(new Date());
     const outside = date.getMonth() !== month;
-    cells.push(`<div class="day-cell ${outside ? 'outside' : ''} ${isToday ? 'today' : ''}"><div class="day-number">${date.getDate()}</div>${daySlots.map((slot) => {
-      const dueSoon = isDueInTwoDays(slot.date);
-      return `<button class="slot ${unitPaymentStatus(slot.unitId) === 'Paid' ? 'paid' : 'pending'} ${dueSoon ? 'is-due-soon' : ''}" data-slot-id="${slot.id}">${unitName(slot.unitId)}${dueSoon ? '<span class="due-soon-label">Due in 2 days</span>' : ''}<span class="time">${slot.time || 'Time not set'}</span>${paymentLabel(slot.unitId)}${inspectionLabel(slot.unitId)}</button>`;
-    }).join('')}</div>`);
+    cells.push(`<div class="day-cell ${outside ? 'outside' : ''} ${isToday ? 'today' : ''}"><div class="day-number">${date.getDate()}</div>${daySlots.map((slot) => `<button class="slot ${unitPaymentStatus(slot.unitId) === 'Paid' ? 'paid' : 'pending'}" data-slot-id="${slot.id}">${unitName(slot.unitId)}<span class="time">${slot.time || 'Time not set'}</span>${paymentLabel(slot.unitId)}${inspectionLabel(slot.unitId)}</button>`).join('')}</div>`);
   }
   $('#calendarGrid').innerHTML = cells.join('');
   document.querySelectorAll('[data-slot-id]').forEach((button) => button.addEventListener('click', () => editSlot(button.dataset.slotId)));
