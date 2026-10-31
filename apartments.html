@@ -13,6 +13,10 @@
     [hidden]{display:none!important}
     .apartment-list-panel{padding:0;border:0;border-radius:0;background:transparent}
     .apartment-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:14px;overflow:visible}
+    .apartment-tabs{display:flex;gap:8px;margin-top:18px;border-bottom:1px solid #c9d3c5}
+    .apartment-tab{display:inline-flex;align-items:center;gap:8px;margin-bottom:-1px;padding:10px 14px;border:0;border-bottom:3px solid transparent;background:transparent;color:#5f7066;font:700 12px 'DM Sans';cursor:pointer}
+    .apartment-tab[aria-selected="true"]{border-bottom-color:#036307;color:#013220}
+    .apartment-tab span{min-width:20px;padding:2px 6px;border-radius:99px;background:#e6ebdf;color:inherit;text-align:center;font-size:10px}
     .apartment-card{min-width:0;border-radius:8px;padding:18px;overflow-wrap:anywhere}
     .apartment-card.is-upcoming{background:#fff3c4;border-color:#bc932b;box-shadow:inset 0 0 0 1px #bc932b}
     .apartment-card.is-completed{background:#c8e6cf;border-color:#69a77a;color:#163d24}
@@ -42,7 +46,7 @@
     .document-grid{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))}
     .document-card{min-width:0}
     .record-heading{gap:12px;flex-wrap:wrap}
-    @media(max-width:700px){.unit-record{grid-template-columns:minmax(0,1fr)}.record-panel.stage-divider,.record-panel.payment-panel{grid-template-columns:minmax(0,1fr)}.inspection-schedule-fields{grid-column:1;grid-template-columns:minmax(0,1fr)}.profile-header-actions{justify-content:flex-start}}
+    @media(max-width:700px){.unit-record{grid-template-columns:minmax(0,1fr)}.record-panel.stage-divider,.record-panel.payment-panel{grid-template-columns:minmax(0,1fr)}.inspection-schedule-fields{grid-column:1;grid-template-columns:minmax(0,1fr)}.profile-header-actions{justify-content:flex-start}.apartment-tab{padding:10px 9px}}
   </style>
 </head>
 <body>
@@ -63,7 +67,11 @@
       <header class="topbar"><div><p class="eyebrow">Tuesday, September 08, 2026</p><h1>Apartments</h1></div><div class="top-actions profile-header-actions"><button class="button button-outline" id="exportApartments" type="button">Export to Excel</button><button class="button button-dark" id="addUnit">Add unit</button></div></header>
       <section class="apartment-list-panel" id="apartmentOverview" aria-label="Apartment units">
         <label class="unit-search">Search unit number<input id="unitSearch" type="search" placeholder="Search by unit number"></label>
-        <div class="apartment-list" id="apartmentList"></div>
+        <div class="apartment-tabs" role="tablist" aria-label="Apartment status">
+          <button class="apartment-tab" id="activeUnitsTab" type="button" role="tab" aria-controls="apartmentList" aria-selected="true">Active <span id="activeUnitsCount">0</span></button>
+          <button class="apartment-tab" id="completedUnitsTab" type="button" role="tab" aria-controls="apartmentList" aria-selected="false">Completed <span id="completedUnitsCount">0</span></button>
+        </div>
+        <div class="apartment-list" id="apartmentList" role="tabpanel" aria-labelledby="activeUnitsTab"></div>
       </section>
       <section id="apartmentDetails" aria-label="Unit details" hidden>
         <div class="detail-toolbar"><button class="button button-outline" id="backToApartments">Back to apartments</button><h2 id="detailTitle"></h2><div class="top-actions profile-header-actions"><button class="button button-outline" id="editApartment">Edit</button><button class="button button-dark" id="createProfile">Save profile</button><button class="button button-dark" id="openInspection">Open inspection</button><button class="button danger" id="deleteApartment">Delete apartment</button></div></div>

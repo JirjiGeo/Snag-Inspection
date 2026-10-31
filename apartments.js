@@ -11,6 +11,7 @@ let profileEditing = false;
 let detailsOpen = false;
 let selectedScheduleId = null;
 let scheduleDirty = false;
+let selectedApartmentTab = 'active';
 
 const legacyStages = { 'To be quoted': 'Quote For Approval', Quoted: 'Quote For Approval', Paid: 'For Inspection', 'To be inspected': 'For Inspection', Inspected: 'Completed', 'Report issued': 'Completed', Closed: 'Completed' };
 apartments.forEach((apartment) => {
@@ -89,27 +90,36 @@ function inspectionSchedule(unitId, slots) {
   return bookings.find((slot) => new Date(`${slot.date}T${slot.time || '23:59'}`) >= now) || bookings[bookings.length - 1];
 }
 
+function isApartmentCompleted(apartment) {
+  return apartment.record.unitStatus === 'Completed' || apartment.record.inspectionStatus === 'Completed';
+}
+
 function renderApartmentList() {
   const query = ($('#unitSearch')?.value || '').trim().toLowerCase();
   const slots = JSON.parse(localStorage.getItem(scheduleKey) || '{}').slots || [];
   const reminderDate = new Date();
   reminderDate.setDate(reminderDate.getDate() + 2);
   const reminderKey = `${reminderDate.getFullYear()}-${String(reminderDate.getMonth() + 1).padStart(2, '0')}-${String(reminderDate.getDate()).padStart(2, '0')}`;
-  const visible = apartments.filter((apartment) => apartment.name.toLowerCase().includes(query))
+  const completedCount = apartments.filter(isApartmentCompleted).length;
+  $('#activeUnitsCount').textContent = apartments.length - completedCount;
+  $('#completedUnitsCount').textContent = completedCount;
+  $('#activeUnitsTab').setAttribute('aria-selected', String(selectedApartmentTab === 'active'));
+  $('#completedUnitsTab').setAttribute('aria-selected', String(selectedApartmentTab === 'completed'));
+  $('#apartmentList').setAttribute('aria-labelledby', selectedApartmentTab === 'active' ? 'activeUnitsTab' : 'completedUnitsTab');
+  const visible = apartments.filter((apartment) => isApartmentCompleted(apartment) === (selectedApartmentTab === 'completed'))
+    .filter((apartment) => apartment.name.toLowerCase().includes(query))
     .map((apartment) => ({ apartment, schedule: inspectionSchedule(apartment.id, slots) }))
     .sort((first, second) => {
-      const firstCompleted = first.apartment.record.unitStatus === 'Completed' || first.apartment.record.inspectionStatus === 'Completed';
-      const secondCompleted = second.apartment.record.unitStatus === 'Completed' || second.apartment.record.inspectionStatus === 'Completed';
-      return Number(firstCompleted) - Number(secondCompleted)
-        || Number(!first.schedule) - Number(!second.schedule)
+      return Number(!first.schedule) - Number(!second.schedule)
         || `${first.schedule?.date || ''}T${first.schedule?.time || ''}`.localeCompare(`${second.schedule?.date || ''}T${second.schedule?.time || ''}`);
     });
   $('#apartmentList').innerHTML = visible.length ? visible.map(({ apartment, schedule }) => {
     const date = schedule ? new Date(`${schedule.date}T${schedule.time || '00:00'}`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not scheduled';
-    const status = apartment.record.unitStatus || 'Quote For Approval';
+    const completed = isApartmentCompleted(apartment);
+    const status = completed ? 'Completed' : apartment.record.unitStatus || 'Quote For Approval';
     const paymentStatus = apartment.record.paymentStatus || 'Payment Pending';
     const upcoming = schedule?.date === reminderKey;
-    return `<button class="apartment-card ${status === 'Completed' ? 'is-completed' : ''} ${upcoming ? 'is-upcoming' : ''}" data-apartment-id="${escapeHtml(apartment.id)}"><dl><div><dt>Unit number</dt><dd><strong>${escapeHtml(apartment.name)}</strong></dd></div><div><dt>Bedrooms</dt><dd>${escapeHtml(apartment.record.unitBedrooms || 'Not set')}</dd></div><div><dt>Status</dt><dd>${escapeHtml(status)}</dd></div><div><dt>Payment status</dt><dd class="payment-status ${paymentStatus === 'Paid' ? 'is-paid' : 'is-pending'}">${escapeHtml(paymentStatus)}</dd></div><div><dt>Inspection date</dt><dd class="inspection-date">${escapeHtml(date)}</dd></div><div><dt>Inspection time</dt><dd>${escapeHtml(schedule?.time || 'Not set')}</dd></div><div><dt>Inspected by</dt><dd>${escapeHtml(apartment.record.inspectedBy || 'Not set')}</dd></div></dl></button>`;
+    return `<button class="apartment-card ${completed ? 'is-completed' : ''} ${upcoming ? 'is-upcoming' : ''}" data-apartment-id="${escapeHtml(apartment.id)}"><dl><div><dt>Unit number</dt><dd><strong>${escapeHtml(apartment.name)}</strong></dd></div><div><dt>Bedrooms</dt><dd>${escapeHtml(apartment.record.unitBedrooms || 'Not set')}</dd></div><div><dt>Status</dt><dd>${escapeHtml(status)}</dd></div><div><dt>Payment status</dt><dd class="payment-status ${paymentStatus === 'Paid' ? 'is-paid' : 'is-pending'}">${escapeHtml(paymentStatus)}</dd></div><div><dt>Inspection date</dt><dd class="inspection-date">${escapeHtml(date)}</dd></div><div><dt>Inspection time</dt><dd>${escapeHtml(schedule?.time || 'Not set')}</dd></div><div><dt>Inspected by</dt><dd>${escapeHtml(apartment.record.inspectedBy || 'Not set')}</dd></div></dl></button>`;
   }).join('') : '<p class="empty-findings">No units match this search.</p>';
   document.querySelectorAll('[data-apartment-id]').forEach((button) => button.addEventListener('click', () => {
     activeApartmentId = button.dataset.apartmentId;
@@ -496,6 +506,14 @@ $('#editApartment').addEventListener('click', toggleEdit);
 $('#deleteApartment').addEventListener('click', deleteApartment);
 $('#openInspection').addEventListener('click', openInspection);
 $('#unitSearch').addEventListener('input', renderApartmentList);
+$('#activeUnitsTab').addEventListener('click', () => {
+  selectedApartmentTab = 'active';
+  renderApartmentList();
+});
+$('#completedUnitsTab').addEventListener('click', () => {
+  selectedApartmentTab = 'completed';
+  renderApartmentList();
+});
 window.addEventListener('focus', renderApartmentList);
 window.addEventListener('snag-cloud-documents-updated', () => {
   const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
