@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snagline-offline-v9';
+const CACHE_NAME = 'snagline-offline-v10';
 const APP_ASSETS = [
   './',
   './index.html',
@@ -42,14 +42,10 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
-  event.respondWith(caches.match(request).then((cached) => {
-    if (cached) return cached;
-    return fetch(request).then((response) => {
-      if (response.ok) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-      }
-      return response;
-    });
-  }));
+  event.respondWith(fetch(request, { cache: 'no-cache' }).then((response) => {
+    if (!response.ok) return response;
+    return caches.open(CACHE_NAME)
+      .then((cache) => cache.put(request, response.clone()))
+      .then(() => response);
+  }, () => caches.match(request).then((cached) => cached || Response.error())));
 });

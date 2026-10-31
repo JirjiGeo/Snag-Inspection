@@ -12,7 +12,7 @@
   updateStatus();
 
   if ('serviceWorker' in navigator && window.isSecureContext) {
-    navigator.serviceWorker.register('./service-worker.js').catch((error) => {
+    navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).catch((error) => {
       console.error('Offline inspection caching could not be enabled.', error);
       if (status) status.textContent = 'Offline page caching unavailable';
     });
