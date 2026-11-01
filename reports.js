@@ -70,7 +70,7 @@ function renderReport() {
   const uploadedReport = uploadedReports[unit.id];
   detail.innerHTML = `
     <h3>${unit.name}</h3>
-    <p class="report-meta">${unit.record?.buildingName || '—'} · ${unit.record?.unitBedrooms || '—'} · ${unit.record?.unitLayout || '—'} · ${unit.record?.outdoorArea || '—'} · Inspected by: ${meta.inspectedBy || '—'} ${meta.date ? `· ${meta.date}` : ''}${meta.time ? ` ${meta.time}` : ''}</p>
+    <p class="report-meta">${unit.record?.buildingName || '—'} · ${unit.record?.unitBedrooms || '—'} · ${unit.record?.unitLayout || '—'} · ${unit.record?.outdoorArea || '—'} · Inspected by: ${window.snagInspectorNames(meta.inspectedBy || unit.record?.inspectedBy).join(', ') || '—'} ${meta.date ? `· ${meta.date}` : ''}${meta.time ? ` ${meta.time}` : ''}</p>
     <div class="report-actions"><button class="button button-dark" id="exportUnitReport">Export report (.xls)</button><button class="button button-dark" id="exportUnitWord">Export report (.docx)</button></div>
     <section class="uploaded-report-panel" aria-label="Uploaded PDF report">
       <div><h4>Uploaded PDF report</h4><p class="report-meta">${uploadedReport ? `Current file: ${escapeHtml(uploadedReport.name)}` : 'No PDF uploaded for this unit.'}</p></div>
@@ -234,7 +234,7 @@ function exportReport(unit, unitFindingsList, meta) {
     const photoNames = attachments.map((attachment, index) => `Photo ${index + 1}: ${attachment.name || 'image'}`).join(' | ') || 'No photos';
     rows.push([
       unit.name, unit.record?.buildingName || '', unit.record?.ownerName || '', unit.record?.unitBedrooms || '', unit.record?.unitLayout || '', unit.record?.outdoorArea || '',
-      meta.date || '', meta.time || '', meta.inspectedBy || '', finding.area || '', finding.text || '', finding.status || '', finding.note || '', attachments.length, photoNames
+      meta.date || '', meta.time || '', window.snagInspectorNames(meta.inspectedBy || unit.record?.inspectedBy).join(', '), finding.area || '', finding.text || '', finding.status || '', finding.note || '', attachments.length, photoNames
     ]);
     const rowNumber = findingIndex + 5;
     attachments.forEach((attachment, photoIndex) => {
@@ -352,7 +352,7 @@ async function exportWordReport(unit, unitFindingsList, meta, reportSections) {
 <tr><th>Outdoor Area</th><td>${unit.record?.outdoorArea || 'N/A'}</td></tr>
 <tr><th>Inspection Date</th><td>${meta.date || 'N/A'}</td></tr>
 <tr><th>Inspection Time</th><td>${meta.time || 'N/A'}</td></tr>
-<tr><th>Inspected By</th><td>${meta.inspectedBy || 'N/A'}</td></tr>
+<tr><th>Inspected By</th><td>${window.snagInspectorNames(meta.inspectedBy || unit.record?.inspectedBy).join(', ') || 'N/A'}</td></tr>
 </table>`;
 
     htmlContent += `<h2>Summary</h2>
