@@ -18,9 +18,9 @@
     .apartment-tab[aria-selected="true"]{border-bottom-color:#036307;color:#013220}
     .apartment-tab span{min-width:20px;padding:2px 6px;border-radius:99px;background:#e6ebdf;color:inherit;text-align:center;font-size:10px}
     .apartment-card{min-width:0;border-radius:8px;padding:18px;overflow-wrap:anywhere}
-    .apartment-card.is-upcoming{background:#fff3c4;border-color:#bc932b;box-shadow:inset 0 0 0 1px #bc932b;animation:due-soon-border-blink .8s steps(2,end) infinite}
-    @keyframes due-soon-border-blink{0%,49%{border-color:#bc932b}50%,100%{border-color:#a52e26}}
-    @media(prefers-reduced-motion:reduce){.apartment-card.is-upcoming{animation:none;outline:3px solid #a52e26;outline-offset:1px}}
+    .apartment-card.is-upcoming{background:#fff3c4;border:4px solid #ff1744;box-shadow:0 0 0 2px #fff,0 0 0 5px #ff1744;animation:due-soon-border-blink .8s steps(2,end) infinite}
+    @keyframes due-soon-border-blink{0%,49%{border-color:#ff1744;box-shadow:0 0 0 2px #fff,0 0 0 5px #ff1744}50%,100%{border-color:#6a00ff;box-shadow:0 0 0 2px #fff,0 0 0 5px #6a00ff}}
+    @media(prefers-reduced-motion:reduce){.apartment-card.is-upcoming{animation:none;outline:4px solid #ff1744;outline-offset:2px}}
     .apartment-card.is-completed{background:#c8e6cf;border-color:#69a77a;color:#163d24}
     .apartment-card strong{font-size:18px;margin:0}
     .apartment-card dl{display:grid;gap:10px;margin:0}

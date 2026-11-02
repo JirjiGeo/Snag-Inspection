@@ -94,12 +94,18 @@ function isApartmentCompleted(apartment) {
   return apartment.record.unitStatus === 'Completed' || apartment.record.inspectionStatus === 'Completed';
 }
 
+function isInspectionDueSoonOrOverdue(date) {
+  const [year, month, day] = String(date || '').split('-').map(Number);
+  const dueDate = new Date(Date.UTC(year, month - 1, day));
+  if (!Number.isFinite(dueDate.getTime()) || dueDate.toISOString().slice(0, 10) !== date) return false;
+  const today = new Date();
+  const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return (dueDate.getTime() - todayUtc) / 86400000 <= 2;
+}
+
 function renderApartmentList() {
   const query = ($('#unitSearch')?.value || '').trim().toLowerCase();
   const slots = JSON.parse(localStorage.getItem(scheduleKey) || '{}').slots || [];
-  const reminderDate = new Date();
-  reminderDate.setDate(reminderDate.getDate() + 2);
-  const reminderKey = `${reminderDate.getFullYear()}-${String(reminderDate.getMonth() + 1).padStart(2, '0')}-${String(reminderDate.getDate()).padStart(2, '0')}`;
   const completedCount = apartments.filter(isApartmentCompleted).length;
   $('#activeUnitsCount').textContent = apartments.length - completedCount;
   $('#completedUnitsCount').textContent = completedCount;
@@ -118,7 +124,7 @@ function renderApartmentList() {
     const completed = isApartmentCompleted(apartment);
     const status = completed ? 'Completed' : apartment.record.unitStatus || 'Quote For Approval';
     const paymentStatus = apartment.record.paymentStatus || 'Payment Pending';
-    const upcoming = schedule?.date === reminderKey;
+    const upcoming = !completed && isInspectionDueSoonOrOverdue(schedule?.date);
     return `<button class="apartment-card ${completed ? 'is-completed' : ''} ${upcoming ? 'is-upcoming' : ''}" data-apartment-id="${escapeHtml(apartment.id)}"><dl><div><dt>Unit number</dt><dd><strong>${escapeHtml(apartment.name)}</strong></dd></div><div><dt>Bedrooms</dt><dd>${escapeHtml(apartment.record.unitBedrooms || 'Not set')}</dd></div><div><dt>Status</dt><dd>${escapeHtml(status)}</dd></div><div><dt>Payment status</dt><dd class="payment-status ${paymentStatus === 'Paid' ? 'is-paid' : 'is-pending'}">${escapeHtml(paymentStatus)}</dd></div><div><dt>Inspection date</dt><dd class="inspection-date">${escapeHtml(date)}</dd></div><div><dt>Inspection time</dt><dd>${escapeHtml(schedule?.time || 'Not set')}</dd></div><div><dt>Inspected by</dt><dd>${escapeHtml(window.snagInspectorNames(apartment.record.inspectedBy).join(', ') || 'Not set')}</dd></div></dl></button>`;
   }).join('') : '<p class="empty-findings">No units match this search.</p>';
   document.querySelectorAll('[data-apartment-id]').forEach((button) => button.addEventListener('click', () => {
