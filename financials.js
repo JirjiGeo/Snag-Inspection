@@ -7,15 +7,15 @@ function amountInCents(value) {
   return Number.isFinite(amount) ? Math.round((amount + Number.EPSILON) * 100) : null;
 }
 
-function inspectionState() {
+function readInspectionState() {
   return JSON.parse(localStorage.getItem('snagline-inspection-state') || '{}');
 }
 
-function inspectorFor(apartment, state = inspectionState()) {
+function inspectorFor(apartment, state = readInspectionState()) {
   return window.snagPreferredInspectorNames(state.inspectionMeta?.[apartment.id]?.inspectedBy, apartment.record?.inspectedBy);
 }
 
-function summarizeInspectors(apartments, state = inspectionState()) {
+function summarizeInspectors(apartments, state = readInspectionState()) {
   const summaries = new Map((window.SNAG_INSPECTORS || []).map((inspector) => [inspector, []]));
   apartments.forEach((apartment) => {
     inspectorFor(apartment, state).forEach((inspector) => {
@@ -51,7 +51,7 @@ function spreadsheetWorksheet(name, rows) {
 
 function exportFinancials() {
   const allApartments = JSON.parse(localStorage.getItem(storageKey) || '{}').apartments || [];
-  const state = inspectionState();
+  const state = readInspectionState();
   const paidApartments = allApartments.filter((apartment) => apartment.record?.paymentStatus === 'Paid');
   const financialRows = [
     ['Unit Number', 'Payment Status', 'Inspector', 'Unit Size', 'Invoiced Amount', 'Qbel Charges W VAT', 'First Bridge W VAT']
@@ -136,7 +136,7 @@ function exportFinancials() {
 
 function renderFinancials() {
   const allApartments = JSON.parse(localStorage.getItem(storageKey) || '{}').apartments || [];
-  const state = inspectionState();
+  const state = readInspectionState();
   const apartments = allApartments
     .filter((apartment) => apartment.record?.paymentStatus === 'Paid');
   const fields = ['invoicedAmount', 'qbelChargesWithVat', 'firstBridgeWithVat'];
