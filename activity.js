@@ -47,7 +47,7 @@ function paymentLabel(id) {
 }
 
 function inspectionLabel(id) {
-  return `<span class="inspection-label">Inspection: ${escapeHtml(unitInspectionStatus(id))}</span>`;
+  return `<span class="inspection-label">${escapeHtml(unitInspectionStatus(id))}</span>`;
 }
 
 function renderPaymentStatusField() {
@@ -120,7 +120,7 @@ function renderCalendar() {
     const daySlots = slots.filter((slot) => slot.date === key);
     const isToday = key === formatDate(new Date());
     const outside = date.getMonth() !== month;
-    cells.push(`<div class="day-cell ${outside ? 'outside' : ''} ${isToday ? 'today' : ''}"><div class="day-number">${date.getDate()}</div>${daySlots.map((slot) => `<button class="slot" data-slot-id="${slot.id}">${unitName(slot.unitId)}<span class="time">${slot.time || 'Time not set'}</span>${inspectionLabel(slot.unitId)}</button>`).join('')}</div>`);
+    cells.push(`<div class="day-cell ${outside ? 'outside' : ''} ${isToday ? 'today' : ''}"><div class="day-number">${date.getDate()}</div>${daySlots.map((slot) => `<button class="slot ${unitPaymentStatus(slot.unitId) === 'Paid' ? 'paid' : 'pending'}" data-slot-id="${slot.id}">${unitName(slot.unitId)}<span class="time">${slot.time || 'Time not set'}</span>${paymentLabel(slot.unitId)}${inspectionLabel(slot.unitId)}</button>`).join('')}</div>`);
   }
   $('#calendarGrid').innerHTML = cells.join('');
   document.querySelectorAll('[data-slot-id]').forEach((button) => button.addEventListener('click', () => editSlot(button.dataset.slotId)));
