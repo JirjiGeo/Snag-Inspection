@@ -50,6 +50,14 @@
     .document-grid{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))}
     .document-card{min-width:0}
     .record-heading{gap:12px;flex-wrap:wrap}
+    #inspectorContactsDialog{width:min(440px,calc(100% - 32px));max-height:80vh;border:1px solid #aeb6bd;border-radius:10px;padding:20px;color:#26333a}
+    #inspectorContactsDialog::backdrop{background:rgba(0,0,0,.45)}
+    #inspectorContactsDialog h2{margin:0 0 8px;font:700 18px 'Space Grotesk'}
+    #inspectorContactsDialog p{margin:0 0 16px;color:#5f6d77;font-size:13px}
+    #inspectorContactFields{display:grid;gap:12px}
+    #inspectorContactFields label{display:grid;gap:5px;font:700 12px 'DM Sans'}
+    #inspectorContactFields input{box-sizing:border-box;width:100%;border:1px solid #aeb6bd;border-radius:5px;padding:9px;font:500 13px 'DM Sans'}
+    #inspectorContactsDialog .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
     @media(max-width:700px){.unit-record{grid-template-columns:minmax(0,1fr)}.record-panel.stage-divider,.record-panel.payment-panel{grid-template-columns:minmax(0,1fr)}.inspection-schedule-fields{grid-column:1;grid-template-columns:minmax(0,1fr)}.profile-header-actions{justify-content:flex-start}.apartment-tab{padding:10px 9px}}
   </style>
 </head>
@@ -78,7 +86,7 @@
         <div class="apartment-list" id="apartmentList" role="tabpanel" aria-labelledby="activeUnitsTab"></div>
       </section>
       <section id="apartmentDetails" aria-label="Unit details" hidden>
-        <div class="detail-toolbar"><button class="button button-outline" id="backToApartments">Back to apartments</button><h2 id="detailTitle"></h2><div class="top-actions profile-header-actions"><button class="button button-outline" id="editApartment">Edit</button><button class="button button-dark" id="createProfile">Save profile</button><button class="button button-dark" id="openInspection">Open inspection</button><button class="button danger" id="deleteApartment">Delete apartment</button></div></div>
+        <div class="detail-toolbar"><button class="button button-outline" id="backToApartments">Back to apartments</button><h2 id="detailTitle"></h2><div class="top-actions profile-header-actions"><button class="button button-outline" id="editApartment">Edit</button><button class="button button-dark" id="createProfile">Save profile</button><button class="button button-outline" id="emailAssignment">Email assignment</button><button class="button button-dark" id="openInspection">Open inspection</button><button class="button danger" id="deleteApartment">Delete apartment</button></div></div>
         <div class="unit-record" aria-label="Apartment record">
         <div class="record-panel">
           <div class="record-heading"><h3>Owner details</h3><span>Contact</span></div>
@@ -100,6 +108,7 @@
           <div class="workflow-fields">
             <label>Current stage<select id="unitStatus"><option>Quote For Approval</option><option>For Inspection</option><option>Completed</option><option>Cancelled</option></select></label>
             <label>Inspected by<select id="inspectedBy" data-inspector-picker aria-describedby="inspectorSelectionHelp"><option value="">Select inspector</option></select><small id="inspectorSelectionHelp">Hold Ctrl (Windows) or Command (Mac) to select multiple.</small></label>
+            <button class="button button-outline" id="manageInspectorContacts" type="button">Manage inspector emails</button>
           </div>
           <div class="workflow-fields">
             <label>Inspection status<select id="inspectionStatus"><option>Completed</option><option selected>To be scheduled</option><option>Confirmed</option><option>Cancelled</option></select></label>
@@ -129,6 +138,18 @@
       </section>
     </main>
   </div>
+  <dialog id="inspectorContactsDialog" aria-labelledby="inspectorContactsTitle">
+    <form id="inspectorContactsForm">
+      <h2 id="inspectorContactsTitle">Inspector email addresses</h2>
+      <p>Save an email address for each inspector to use in assignment drafts.</p>
+      <p id="inspectorContactsMessage" role="status" hidden></p>
+      <div id="inspectorContactFields"></div>
+      <div class="dialog-actions">
+        <button class="button button-outline" type="button" id="cancelInspectorContacts">Cancel</button>
+        <button class="button button-dark" type="submit">Save email addresses</button>
+      </div>
+    </form>
+  </dialog>
   <div class="toast" id="toast">Saved to local workspace</div>
   <input type="file" id="documentInput" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

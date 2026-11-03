@@ -2,6 +2,7 @@ const $ = (selector) => document.querySelector(selector);
 const storageKey = 'snagline-apartment-record';
 const inspectionLinkKey = 'snagline-linked-apartment';
 const scheduleKey = 'snagline-inspection-schedule';
+const inspectorContactsKey = 'snagline-inspector-contacts';
 const documentTypes = ['Title deed', 'Oqood', 'Unit layout', 'Quotation', 'Invoice', 'Receipt', 'Client payment proof', 'Inspection report'];
 const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
 let apartments = saved.apartments || [createApartment()];
@@ -12,6 +13,7 @@ let detailsOpen = false;
 let selectedScheduleId = null;
 let scheduleDirty = false;
 let selectedApartmentTab = 'active';
+let emailAssignmentPending = false;
 
 const legacyStages = { 'To be quoted': 'Quote For Approval', Quoted: 'Quote For Approval', Paid: 'For Inspection', 'To be inspected': 'For Inspection', Inspected: 'Completed', 'Report issued': 'Completed', Closed: 'Completed' };
 apartments.forEach((apartment) => {
@@ -504,6 +506,75 @@ function openInspection() {
   window.location.href = 'inspection.html';
 }
 
+function inspectorContacts() {
+  return JSON.parse(localStorage.getItem(inspectorContactsKey) || '{}');
+}
+
+function openInspectorContacts(message = '') {
+  const container = $('#inspectorContactFields');
+  const contacts = inspectorContacts();
+  const assignedInspectors = window.snagInspectorNames(activeApartment().record.inspectedBy);
+  container.replaceChildren();
+  window.SNAG_INSPECTORS.forEach((inspector, index) => {
+    const label = document.createElement('label');
+    label.htmlFor = `inspectorContact${index}`;
+    label.textContent = inspector;
+    const input = document.createElement('input');
+    input.id = label.htmlFor;
+    input.type = 'email';
+    input.autocomplete = 'email';
+    input.required = emailAssignmentPending && assignedInspectors.includes(inspector);
+    input.value = contacts[inspector] || '';
+    input.dataset.inspectorName = inspector;
+    input.placeholder = 'name@example.com';
+    label.append(input);
+    container.append(label);
+  });
+  const messageElement = $('#inspectorContactsMessage');
+  messageElement.textContent = message;
+  messageElement.hidden = !message;
+  $('#inspectorContactsDialog').showModal();
+}
+
+function emailAssignment() {
+  if (profileEditing) {
+    if (!$('#quotedAmount').reportValidity() || !$('#calculatedArea').reportValidity()) return;
+    if (scheduleDirty && (!$('#inspectionDate').reportValidity() || !$('#inspectionTime').reportValidity())) return;
+    saveRecord(false);
+  }
+  const apartment = activeApartment();
+  const inspectors = window.snagInspectorNames(apartment.record.inspectedBy);
+  if (!inspectors.length) {
+    showToast('Assign an inspector before emailing the assignment.');
+    return;
+  }
+  const contacts = inspectorContacts();
+  const missing = inspectors.filter((inspector) => !contacts[inspector]);
+  if (missing.length) {
+    emailAssignmentPending = true;
+    openInspectorContacts(`Add an email address for ${missing.join(', ')} to create the assignment draft.`);
+    return;
+  }
+
+  const slots = JSON.parse(localStorage.getItem(scheduleKey) || '{}').slots || [];
+  const schedule = slots.find((slot) => slot.unitId === apartment.id && slot.id === selectedScheduleId)
+    || inspectionSchedule(apartment.id, slots);
+  const date = schedule?.date
+    ? new Date(`${schedule.date}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Not scheduled';
+  const body = [
+    `Inspector${inspectors.length === 1 ? '' : 's'}: ${inspectors.join(', ')}`,
+    `Unit: ${apartment.name}`,
+    `Size: ${apartment.record.unitSpace || 'Not provided'}`,
+    `Bedrooms: ${apartment.record.unitBedrooms || 'Not provided'}`,
+    `Inspection date: ${date}`,
+    `Inspection time: ${schedule?.time || 'Not scheduled'}`
+  ].join('\n');
+  const recipients = inspectors.map((inspector) => encodeURIComponent(contacts[inspector])).join(',');
+  const subject = `Inspection assignment - ${apartment.name}`;
+  window.location.href = `mailto:${recipients}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function renderAll(show = true) {
   $('#apartmentOverview').hidden = detailsOpen;
   $('#apartmentDetails').hidden = !detailsOpen;
@@ -541,6 +612,28 @@ $('#createProfile').addEventListener('click', createProfile);
 $('#editApartment').addEventListener('click', toggleEdit);
 $('#deleteApartment').addEventListener('click', deleteApartment);
 $('#openInspection').addEventListener('click', openInspection);
+$('#emailAssignment').addEventListener('click', emailAssignment);
+$('#manageInspectorContacts').addEventListener('click', () => openInspectorContacts());
+$('#cancelInspectorContacts').addEventListener('click', () => {
+  emailAssignmentPending = false;
+  $('#inspectorContactsDialog').close();
+});
+$('#inspectorContactsDialog').addEventListener('close', () => {
+  emailAssignmentPending = false;
+  $('#inspectorContactsMessage').hidden = true;
+});
+$('#inspectorContactsForm').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const contacts = Object.fromEntries([...$('#inspectorContactFields').querySelectorAll('input')]
+    .map((input) => [input.dataset.inspectorName, input.value.trim()]));
+  localStorage.setItem(inspectorContactsKey, JSON.stringify(contacts));
+  window.snagCloudSave?.();
+  const shouldEmailAssignment = emailAssignmentPending;
+  emailAssignmentPending = false;
+  $('#inspectorContactsDialog').close();
+  showToast('Inspector email addresses saved');
+  if (shouldEmailAssignment) emailAssignment();
+});
 $('#unitSearch').addEventListener('input', renderApartmentList);
 $('#activeUnitsTab').addEventListener('click', () => {
   selectedApartmentTab = 'active';
