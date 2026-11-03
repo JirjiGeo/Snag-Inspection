@@ -92,6 +92,49 @@ function inspectionSchedule(unitId, slots) {
   return bookings.find((slot) => new Date(`${slot.date}T${slot.time || '23:59'}`) >= now) || bookings[bookings.length - 1];
 }
 
+function inspectorScheduleConflicts(unitId) {
+  const apartment = apartments.find((item) => item.id === unitId);
+  if (!apartment || isApartmentCompleted(apartment)
+    || apartment.record.unitStatus === 'Cancelled'
+    || apartment.record.inspectionStatus === 'Cancelled') return [];
+
+  const slots = JSON.parse(localStorage.getItem(scheduleKey) || '{}').slots || [];
+  const currentSlots = slots.filter((slot) => slot.unitId === unitId && slot.date && slot.time);
+  const apartmentById = new Map(apartments.map((apartment) => [apartment.id, apartment]));
+  const inspectionMeta = JSON.parse(localStorage.getItem('snagline-inspection-state') || '{}').inspectionMeta || {};
+  const conflicts = new Map();
+
+  currentSlots.forEach((currentSlot) => {
+    const assigned = new Set(window.snagInspectorNames(apartment.record.inspectedBy));
+    if (!assigned.size) return;
+
+    slots.forEach((otherSlot) => {
+      if (otherSlot.unitId === unitId || otherSlot.date !== currentSlot.date || otherSlot.time !== currentSlot.time) return;
+      const otherApartment = apartmentById.get(otherSlot.unitId);
+      if (!otherApartment || isApartmentCompleted(otherApartment)
+        || otherApartment.record.unitStatus === 'Cancelled'
+        || otherApartment.record.inspectionStatus === 'Cancelled') return;
+
+      const otherInspectors = window.snagPreferredInspectorNames(
+        inspectionMeta[otherApartment.id]?.inspectedBy,
+        otherApartment.record.inspectedBy
+      );
+      otherInspectors.forEach((inspector) => {
+        if (assigned.has(inspector)) conflicts.set(`${inspector}:${otherApartment.id}`, { inspector, unit: otherApartment.name });
+      });
+    });
+  });
+
+  return [...conflicts.values()];
+}
+
+function warnInspectorScheduleConflicts(unitId) {
+  const conflicts = inspectorScheduleConflicts(unitId);
+  if (!conflicts.length) return;
+  const details = conflicts.map(({ inspector, unit }) => `- ${inspector}: ${unit}`).join('\n');
+  window.alert(`Schedule conflict: an assigned inspector is booked for another unit at the same date and time.\n\n${details}\n\nThe assignment will still be saved.`);
+}
+
 function isApartmentCompleted(apartment) {
   return apartment.record.unitStatus === 'Completed' || apartment.record.inspectionStatus === 'Completed';
 }
@@ -384,6 +427,7 @@ function createProfile() {
   if (!$('#quotedAmount').reportValidity() || !$('#calculatedArea').reportValidity()) return;
   if (scheduleDirty && (!$('#inspectionDate').reportValidity() || !$('#inspectionTime').reportValidity())) return;
   saveRecord(false);
+  warnInspectorScheduleConflicts(activeApartment().id);
   profileEditing = false;
   persist(false);
   renderAll(false);
@@ -541,6 +585,7 @@ function emailAssignment() {
     if (!$('#quotedAmount').reportValidity() || !$('#calculatedArea').reportValidity()) return;
     if (scheduleDirty && (!$('#inspectionDate').reportValidity() || !$('#inspectionTime').reportValidity())) return;
     saveRecord(false);
+    warnInspectorScheduleConflicts(activeApartment().id);
   }
   const apartment = activeApartment();
   const inspectors = window.snagInspectorNames(apartment.record.inspectedBy);
