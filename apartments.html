@@ -12,21 +12,23 @@
   <style>
     [hidden]{display:none!important}
     .apartment-list-panel{padding:0;border:0;border-radius:0;background:transparent}
-    .apartment-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:14px;overflow:visible}
+    .apartment-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),280px));gap:14px;overflow:visible}
     .apartment-tabs{display:flex;gap:8px;margin-top:18px;border-bottom:1px solid #c9d3c5}
     .apartment-tab{display:inline-flex;align-items:center;gap:8px;margin-bottom:-1px;padding:10px 14px;border:0;border-bottom:3px solid transparent;background:transparent;color:#5f7066;font:700 12px 'DM Sans';cursor:pointer}
     .apartment-tab[aria-selected="true"]{border-bottom-color:#036307;color:#013220}
     .apartment-tab span{min-width:20px;padding:2px 6px;border-radius:99px;background:#e6ebdf;color:inherit;text-align:center;font-size:10px}
     .apartment-card{min-width:0;border-radius:8px;padding:18px;overflow-wrap:anywhere}
-    .apartment-card.is-upcoming{background:#fff3c4;border-color:#bc932b;box-shadow:inset 0 0 0 1px #bc932b;animation:due-soon-blink .8s steps(2,end) infinite}
+    .apartment-card.is-upcoming{background:#fff3c4;border-color:#bc932b;box-shadow:inset 0 0 0 1px #bc932b}
+    .apartment-card.is-upcoming .apartment-unit-number{animation:due-soon-blink .8s steps(2,end) infinite}
     @keyframes due-soon-blink{0%,49%{opacity:1}50%,100%{opacity:.2}}
-    @media(prefers-reduced-motion:reduce){.apartment-card.is-upcoming{animation:none;outline:3px solid #a52e26;outline-offset:1px}}
+    @media(prefers-reduced-motion:reduce){.apartment-card.is-upcoming{outline:3px solid #a52e26;outline-offset:1px}.apartment-card.is-upcoming .apartment-unit-number{animation:none}}
     .apartment-card.is-completed{background:#c8e6cf;border-color:#69a77a;color:#163d24}
-    .apartment-card strong{font-size:18px;margin:0}
-    .apartment-card dl{display:grid;gap:10px;margin:0}
-    .apartment-card dl div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-    .apartment-card dt{font-weight:400;flex-shrink:0}
-    .apartment-card dd{margin:0;min-width:0;text-align:right}
+    .apartment-card-heading{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+    .apartment-card .apartment-unit-number{display:block;font-size:18px;margin:0}
+    .apartment-card .unit-due-label{font-size:11px;font-weight:700;color:#8a5010}
+    .apartment-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:0}
+    .apartment-card dt{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .apartment-card dd{margin:0;min-width:0;text-align:left;overflow-wrap:anywhere}
     .apartment-card .payment-status{font-weight:700}
     .apartment-card .payment-status.is-paid{color:#176735}
     .apartment-card .payment-status.is-pending{color:#a34b00}
